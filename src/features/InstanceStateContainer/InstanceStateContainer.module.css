@@ -1,0 +1,82 @@
+.inst-state-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* .status-box,
+.curr-state-box {
+    width: 32%;
+    height: 100%;
+    margin-right: 2px;
+} */
+
+.curr-state-box {
+    border-radius: 50%;
+}
+
+.stale {
+    opacity: 0.4;
+    position: relative
+}
+
+.stale::after {
+    position: absolute;
+    top: 0%;
+    right: 15%;
+    content: "!";
+    font-weight: 900;
+    color: rgb(85, 0, 0);
+}
+
+.health-box {
+    width: 0;
+    height: 0;
+    border-top: solid transparent;
+    border-left: solid;
+    border-bottom: solid transparent;
+}
+
+
+.undefined {
+    background-color: grey;
+}
+
+.ok {
+    background-color: green;
+}
+
+.warning {
+    background-color: orange;
+}
+
+.error {
+    background-color: red;
+}
+
+
+.health-undefined {
+    border-left-color: grey;
+}
+
+.health-ok {
+    border-left-color: green;
+}
+
+.health-warning {
+    border-left-color: orange;
+}
+
+.health-error {
+    border-left-color: red;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0.0;
+    }
+}
+
+.catching-up {
+    animation: blink 1s step-start 0s infinite;
+}

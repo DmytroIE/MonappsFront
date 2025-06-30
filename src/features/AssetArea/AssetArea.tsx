@@ -1,0 +1,34 @@
+import * as React from 'react';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Box from '@mui/material/Box';
+
+import InstancePropsPage from '../InstancePropsPage/InstancePropsPage';
+import TabPanel from '../TabPanel/TabPanel';
+import { a11yProps } from '../TabPanel/TabPanel';
+
+
+export default function AssetArea({id}: {id: string}) {
+  const [value, setValue] = React.useState(0);
+
+  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+    setValue(newValue);
+  };
+
+  return (
+    <Box sx={{ width: '100%' }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
+          <Tab label="Properties" {...a11yProps(0)} />
+          <Tab label="Something else" {...a11yProps(1)} />
+        </Tabs>
+      </Box>
+      <TabPanel value={value} index={0}>
+        <InstancePropsPage id={id}/>
+      </TabPanel>
+      <TabPanel value={value} index={1}>
+        Later
+      </TabPanel>
+    </Box>
+  );
+}

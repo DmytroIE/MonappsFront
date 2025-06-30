@@ -1,0 +1,35 @@
+.node-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.node-arrow {
+    cursor: pointer;
+}
+
+.node-arrow:hover {
+    background-color: rgba(197, 197, 197, 0.2);
+}
+
+.node-text {
+    margin-right: 5px;
+}
+
+.node-disabled {
+    opacity: 0.4;
+}
+
+.node-content {
+    background-color: rgb(207, 218, 215);
+    border-radius: 14px;
+    padding: 2px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    cursor: pointer;
+}
+
+.node-selected {
+    background-color: rgba(219, 155, 53, 0.2);
+}
