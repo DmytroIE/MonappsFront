@@ -25,20 +25,17 @@ const NodeTree = () => {
 
     const loadingState = useSelector((state) => state.tree.loadingState)
     const nodes = useSelector((state) => state.tree.nodes)
-    //console.log("NodeTree");
-    //console.log(nodes);
+    console.log('height ==> ', height + 50)
+
     if (loadingState === 'pending') {
         return <CircularProgress />;
     } else {
         try {
-            //console.log("Parsing tree");
             const tree = createTreeFromNodes(nodes);
-            //console.log("After parsing");
-            //console.log(tree);
             if (tree.length > 0) {
                 return (
                     // https://www.jameskerr.blog/posts/responsive-sizing-for-react-arborist-tree-component/
-                    <div style={{ display: "flex", flexDirection: "column", height: "100%", width: "100%" }}>
+                    <div className="node-tree">
                         <Input
                             type="text"
                             placeholder="Search..."
@@ -46,11 +43,11 @@ const NodeTree = () => {
                             value={term}
                             onChange={(e) => setTerm(e.target.value)}
                         />
-                        <div style={{ flexGrow: 1, minBlockSize: 0 }} ref={ref}>
+                        <div className="tree" ref={ref}>
                             <Tree
                                 data={tree}
                                 indent={18}
-                                width={width}
+                                width={'400px'}
                                 height={height}
                                 rowHeight={34}
                                 disableMultiSelection={true}

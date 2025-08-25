@@ -21,7 +21,6 @@ const getNodeData = async (id: string) => {
         throw new Error("Cannot bring node data");
     }
     const json = await response.json();
-    // console.log(`getting getSelTreeItemReadings3`);
     return json;
 };
 
@@ -58,7 +57,6 @@ const getNodeReadings = async (ids: string[], from?: number, to?: number) => {
     let readings: any = {};
     let itemsCounter = 0;
     let failedItemsCounter = 0;
-    console.log(`getting getNodeReadings for ${ids}`);
     for (let id of ids) {
         itemsCounter++;
         try {

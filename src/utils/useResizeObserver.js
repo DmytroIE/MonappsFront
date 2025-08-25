@@ -16,6 +16,7 @@ function useResizeObserver(opts = {}) {
   // Saving the callback as a ref. With this, I don't need to put onResize in the
   // effect dep array, and just passing in an anonymous function without memoising
   // will not reinstantiate the hook's ResizeObserver.
+  console.log('opts, ==>', opts)
   const onResize = opts.onResize;
   const onResizeRef = useRef(undefined);
   onResizeRef.current = onResize;
@@ -69,16 +70,16 @@ function useResizeObserver(opts = {}) {
                 opts.box === "border-box"
                   ? "borderBoxSize"
                   : opts.box === "device-pixel-content-box"
-                  ? "devicePixelContentBoxSize"
-                  : "contentBoxSize";
+                    ? "devicePixelContentBoxSize"
+                    : "contentBoxSize";
 
+              console.log('entry, boxProp ====>', entries)
               const reportedWidth = extractSize(entry, boxProp, "inlineSize");
               const reportedHeight = extractSize(entry, boxProp, "blockSize");
+              // console.log('reportedHeight, reportedWidth ===>', reportedHeight, reportedWidth)
 
               const newWidth = reportedWidth ? round(reportedWidth) : undefined;
-              const newHeight = reportedHeight
-                ? round(reportedHeight)
-                : undefined;
+              const newHeight = reportedHeight ? round(reportedHeight) : undefined;
 
               if (
                 previous.current.width !== newWidth ||

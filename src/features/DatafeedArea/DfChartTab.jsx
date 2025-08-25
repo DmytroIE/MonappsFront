@@ -57,7 +57,7 @@ function DfChartTab({ id }) {
         const canvaswidth = numOfMinutes > 25 ? numOfMinutes * 40 : 1000;
 
         return (
-            <Box sx={{ overflow: "auto", width: 1000, margin: "auto" }}>
+            <Box sx={{ overflow: "auto", width: '100%' }}>
                 <Box sx={{ height: 500, width: canvaswidth }}>
                     <Line data={chartData} options={{
                         responsive: true,

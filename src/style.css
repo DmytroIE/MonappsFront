@@ -1,0 +1,53 @@
+.App .side-bar {
+    width: 350px;
+    transition: 0.3s;
+    overflow: hidden;
+}
+
+.App .css-1owst8x {
+    width: 100%;
+    margin: 0;
+}
+
+.node-tree {
+    display: flex;
+    flex-direction: column;
+    width: 350px;
+}
+
+.node-tree .tree {
+    flex-grow: 1;
+    min-block-size: 0;
+    height: 550px;
+    overflow: auto;
+}
+
+.App .btn-nav {
+    display: none;
+}
+
+@media only screen and (max-width: 1440px) {
+    /* .body-section  {
+        flex-direction: column;
+    } */
+}
+
+@media only screen and (max-width: 768px) {
+    .App .side-bar {
+        width: 0;
+    }
+
+    .App .width-100 {
+        width: 350px;
+    }
+
+    .App .btn-nav {
+        display: block;
+    }
+}
+
+@media only screen and (max-width: 425px) {
+    .App .width-100 {
+        width: 100%;
+    }
+}

@@ -23,7 +23,7 @@
 // even though it seems we have access to results for all box types.
 // This also means that we get to keep the current api, being able to return a simple { width, height } pair,
 // regardless of box option.
-export default function extractSize(
+export default function   extractSize(
   entry: ResizeObserverEntry,
   boxProp: "borderBoxSize" | "contentBoxSize" | "devicePixelContentBoxSize",
   sizeType: keyof ResizeObserverSize

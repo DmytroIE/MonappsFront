@@ -6,8 +6,10 @@ import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import MenuIcon from '@mui/icons-material/Menu';
 
-const Navbar = ({addStyles}: {addStyles?: React.CSSProperties}) => {
+const Navbar = ({ addStyles, data }: { addStyles?: React.CSSProperties, data?: any }) => {
   //const handleClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, { name }: MenuItemProps) => { setActiveItem(name as string) }
+
+  const { setNav } = data;
 
   return (
     <Box sx={addStyles}>
@@ -19,6 +21,8 @@ const Navbar = ({addStyles}: {addStyles?: React.CSSProperties}) => {
             color="inherit"
             aria-label="menu"
             sx={{ mr: 2 }}
+            onClick={() => setNav((prev: boolean) => !prev)}
+            className='btn-nav'
           >
             <MenuIcon />
           </IconButton>

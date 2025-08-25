@@ -11,6 +11,7 @@ function TabPanel(props: TabPanelProps) {
 
   return (
     <div
+      className='tab-panel'
       role="tabpanel"
       hidden={value !== index}
       id={`simple-tabpanel-${index}`}

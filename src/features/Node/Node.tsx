@@ -11,7 +11,6 @@ import InstanceIcon from '../InstanceIcon/InstanceIcon';
 
 
 const Node = ({ node, style, dragHandle, tree }: NodeRendererProps<any>) => {
-
     const type = node.data.id.split(' ')[0];
     return (
 
@@ -19,7 +18,6 @@ const Node = ({ node, style, dragHandle, tree }: NodeRendererProps<any>) => {
             ref={dragHandle}
             className={`${styles['node-container']} ${node.isSelected ? styles['node-selected'] : ''}`}
             onKeyDown={(e) => {
-                console.log(JSON.stringify(node.state));
                 if (e.key === "Enter") node.select();
             }}
         >

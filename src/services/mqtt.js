@@ -1,10 +1,11 @@
 import mqtt from 'mqtt';
 import { updateNode } from "../features/NodeTree/treeSlice";
 
+const URL = 'ws://127.0.0.1/mqtt';
 
 export function createMqttClient(dispatch) {
 
-    const client = mqtt.connect('ws://127.0.0.1:8084/mqtt', {
+    const client = mqtt.connect(URL, {
         protocolVersion: 5,
         clean: true,
         properties: {

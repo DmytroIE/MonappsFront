@@ -43,11 +43,11 @@ export default function ApplicationArea({ id }) {
         <InstancePropsPage id={id} />
       </TabPanel>
       <TabPanel value={value} index={1}>
-        <Typography variant='h3' sx={{ textAlign: "center" }}>Graphs</Typography>
+        {/* <Typography variant='h3' sx={{ textAlign: "center" }}>Graphs</Typography> */}
         <AppChartTab id={id} />
       </TabPanel>
       <TabPanel value={value} index={2}>
-        <Typography variant='h3' sx={{ textAlign: "center" }}>Alarm log</Typography>
+        {/* <Typography variant='h3' sx={{ textAlign: "center" }}>Alarm log</Typography> */}
         <Container>Later</Container>
       </TabPanel>
     </Box>

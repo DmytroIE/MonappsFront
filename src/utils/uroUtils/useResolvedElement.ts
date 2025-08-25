@@ -31,10 +31,10 @@ export default function useResolvedElement<T extends Element>(
     const element: T | null = cbElement
       ? cbElement
       : refOrElement
-      ? refOrElement instanceof Element
-        ? refOrElement
-        : refOrElement.current
-      : null;
+        ? refOrElement instanceof Element
+          ? refOrElement
+          : refOrElement.current
+        : null;
 
     if (
       lastReportRef.current &&
