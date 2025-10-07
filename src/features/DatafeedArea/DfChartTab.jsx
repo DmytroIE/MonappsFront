@@ -54,7 +54,7 @@ function DfChartTab({ id }) {
 
         //console.log(chartData.maxTs);
         const numOfMinutes = Math.floor((chartData.maxTs - chartData.minTs) / 60000);
-        const canvaswidth = numOfMinutes > 25 ? numOfMinutes * 40 : 1000;
+        const canvaswidth = numOfMinutes > 50 ? numOfMinutes * 20 : 1000;
 
         return (
             <Box sx={{ overflow: "auto", width: '100%' }}>

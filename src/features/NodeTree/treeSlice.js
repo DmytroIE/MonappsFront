@@ -72,7 +72,7 @@ export const treeSlice = createSlice({
     });
     builder.addCase(fetchNodes.rejected, (state, action) => {
       state.treeLoadingState = 'idle';
-      state.treeNodes = {};
+      state.nodes = {};
     });
 
     // Ind node data - used when some updates via MQTT were published

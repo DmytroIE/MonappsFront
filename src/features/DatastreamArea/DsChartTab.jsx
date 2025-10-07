@@ -59,7 +59,7 @@ function DsChartTab({ id }) {
         const ndMarkerSets = chartData.ndMarkerSets;
 
         const numOfMinutes = Math.floor((chartData.maxTs - chartData.minTs) / 60000);
-        const canvaswidth = numOfMinutes > 25 ? numOfMinutes * 40 : 1000;
+        const canvaswidth = numOfMinutes > 50 ? numOfMinutes * 20 : 1000;
         //console.log("before drawing a chart");
         //console.log(data);
         // console.log("!!!!!!!!!!!!!!!ndMarkerSets");

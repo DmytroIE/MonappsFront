@@ -100,7 +100,7 @@ function AppChartTab({ id }) {
 
         //console.log(chartData.maxTs);
         const numOfMinutes = Math.floor((maxTs - minTs) / 60000);
-        const canvaswidth = numOfMinutes > 25 ? numOfMinutes * 40 : 2000;
+        const canvaswidth = numOfMinutes > 50 ? numOfMinutes * 20 : 2000;
 
         return (
             <Box sx={{ overflowX: "auto", }}>
