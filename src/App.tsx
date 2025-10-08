@@ -10,9 +10,9 @@ import "./style.css"
 function App() {
   const [nav, setNav] = useState(false);
 
-  useEffect(() => {
-    console.log(' v navnavnavnav==>', nav)
-  }, [nav])
+  // useEffect(() => {
+  //   console.log(' v navnavnavnav==>', nav)
+  // }, [nav])
 
   return (
     <div className="App">

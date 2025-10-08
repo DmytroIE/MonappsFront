@@ -48,12 +48,12 @@ export const treeSlice = createSlice({
       state.selNodeId = action.payload
     },
     updateNode: (state, action) => {
-
-      // const id = action.payload.id
-      // const node = state.nodes[id]
-      // if (node !== undefined) {
-      //   state.nodes[id] = { ...node, ...action.payload };
-      // }
+      const id = action.payload.id
+      const node = state.nodes[id]
+      if (node !== undefined) {
+        state.nodes[id] = { ...node, ...action.payload };
+      }
+      // console.log(`${id} updated by an MQTT message`)
     },
     clearSelNodeReadings: (state, action) => {
       state.selNodeReadings = {};
@@ -93,8 +93,8 @@ export const treeSlice = createSlice({
     });
     builder.addCase(fetchNodeReadings.fulfilled, (state, action) => {
       state.selNodeReadingsLoadingState = 'idle';
-      console.log("fetchNodeReadings.fulfilled");
-      console.log(action.payload);
+      // console.log("fetchNodeReadings.fulfilled");
+      // console.log(action.payload);
       for (let itemId in action.payload) {
 
         if (state.selNodeReadings[itemId] === undefined) {

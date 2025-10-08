@@ -73,7 +73,7 @@ function useResizeObserver(opts = {}) {
                     ? "devicePixelContentBoxSize"
                     : "contentBoxSize";
 
-              console.log('entry, boxProp ====>', entries)
+              // console.log('entry, boxProp ====>', entries)
               const reportedWidth = extractSize(entry, boxProp, "inlineSize");
               const reportedHeight = extractSize(entry, boxProp, "blockSize");
               // console.log('reportedHeight, reportedWidth ===>', reportedHeight, reportedWidth)

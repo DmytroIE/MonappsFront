@@ -18,11 +18,20 @@ export const selNodeMiddleware = store => next => action => {
     }
     if (action.type === "tree/updateNode") { // sent by the mqtt client
 
-        // fetch updated info about the node
-        if (action.payload.id !== undefined) {
-            store.dispatch(fetchNodeData({ id: action.payload.id }));
+        if (action.payload.id == undefined) {
+            // a wrong message
+            return;
         }
 
+        // if this is message that contains only the object id
+        if (Object.keys(action.payload).length === 1) {
+            // fetch updated info about the node
+            // console.log(`Middleware -> Update node ${action.payload.id} data`)
+            store.dispatch(fetchNodeData({ id: action.payload.id }));
+            return;
+        }
+
+        // in case of 'datastream' or 'datafeed' (items that have the 'lastReadingTs' field)
         // check if there are new readings and fetch if so
         if (
             store.getState().tree.selNodeId === action.payload.id &&
@@ -31,19 +40,14 @@ export const selNodeMiddleware = store => next => action => {
             ) {
             //find the item in the list of tree items
             const node = store.getState().tree.nodes[action.payload.id];
-            // console.log("selTreeItemMiddleware - checking item");
-            // console.log(item);
-            // console.log(action.payload);
             if (node.lastReadingTs !== undefined && node.lastReadingTs !== action.payload.lastReadingTs) {
-                // item.lastReadingTs can be null or a number > 0, therefore this comparison will work
+                // item.lastReadingTs can be null or a number > 0
                 console.log("selNodeMiddleware - lets bring new readings !!!!!!");
-                // console.log(item);
                 store.dispatch(fetchNodeReadings(
                     {
                         ids: [action.payload.id]
                     }));
             }
-
         }
     }
     next(action);

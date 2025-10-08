@@ -31,7 +31,9 @@ export function createMqttClient(dispatch) {
             if (error) {
                 console.log(error);
             } else {
-                console.log(`${granted[0].topic} was subscribed`);
+                if (Array.isArray(granted) && granted.length > 0) {
+                    console.log(`${granted[0].topic} was subscribed`);
+                }
             }
         })
     })
@@ -48,7 +50,8 @@ export function createMqttClient(dispatch) {
         }
         try {
             const msg_obj = JSON.parse(message.toString());
-            //console.log(msg_obj);
+            console.log('A message received from MQTT');
+            console.log(msg_obj);
             dispatch(updateNode(msg_obj));
         } catch (error) {
             console.log(error);
