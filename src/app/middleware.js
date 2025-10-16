@@ -1,5 +1,5 @@
 import { createMqttClient } from '../services/mqtt';
-import { clearSelNodeReadings, fetchNodeData, fetchNodeReadings } from "../features/NodeTree/treeSlice";
+import { clearSelNodeReadings, fetchNodeData, fetchNodeReadings, addNode, deleteNode } from "../features/NodeTree/treeSlice";
 
 
 export const mqttMiddleware = store => next => action => {
@@ -23,12 +23,25 @@ export const selNodeMiddleware = store => next => action => {
             return;
         }
 
-        // if this is message that contains only the object id
+        const messageType = action.payload.messageType;
+        delete action.payload.messageType;
+
+        // if this is message that contains only the object id (messageType has already been deleted)
         if (Object.keys(action.payload).length === 1) {
-            // fetch updated info about the node
-            // console.log(`Middleware -> Update node ${action.payload.id} data`)
-            store.dispatch(fetchNodeData({ id: action.payload.id }));
-            return;
+            if (messageType === "u") {
+                store.dispatch(fetchNodeData({ id: action.payload.id }));
+                return;
+            }
+            else if (messageType === "c") {
+                store.dispatch(addNode({ id: action.payload.id }));
+                store.dispatch(fetchNodeData({ id: action.payload.id }));
+                return;
+            }
+            else if (messageType === "d") {
+                store.dispatch(deleteNode({ id: action.payload.id }));
+                return;
+            }
+
         }
 
         // in case of 'datastream' or 'datafeed' (items that have the 'lastReadingTs' field)

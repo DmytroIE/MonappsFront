@@ -47,7 +47,7 @@ const NodeTree = () => {
                             <Tree
                                 data={tree}
                                 indent={18}
-                                width={'400px'}
+                                width={'450px'}
                                 height={height}
                                 rowHeight={34}
                                 disableMultiSelection={true}

@@ -55,6 +55,12 @@ export const treeSlice = createSlice({
       }
       // console.log(`${id} updated by an MQTT message`)
     },
+    addNode: (state, action) => {
+      state.nodes[action.payload.id] = action.payload;
+    },
+    deleteNode: (state, action) => {
+      delete state.nodes[action.payload.id];
+    },
     clearSelNodeReadings: (state, action) => {
       state.selNodeReadings = {};
     }
@@ -130,5 +136,5 @@ export const treeSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { selectNode, updateNode, clearSelNodeReadings } = treeSlice.actions;
+export const { selectNode, updateNode, clearSelNodeReadings, addNode, deleteNode } = treeSlice.actions;
 export default treeSlice.reducer;
