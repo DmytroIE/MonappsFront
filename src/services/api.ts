@@ -1,6 +1,8 @@
 const BASE_URL = 'http://127.0.0.1:5000/api/';
 
-
+type nodeWithReadingsId = `datafeed ${number}` | `datastream ${number}`;
+type dsReadingtypes = 'dsReadings' | 'unusDsReadings' | 'invDsReadings' | 'norcDsReadings' | 'ndMarkers' | 'unusNdMarkers';
+type dfReadingtypes = 'dfReadings';
 
 // Tree item API
 const getNodes = async () => {
@@ -24,54 +26,24 @@ const getNodeData = async (id: string) => {
     return json;
 };
 
-
-const getIndReadings = async (id: string, from?: number, to?: number) => {
+const getNodeReadings = async (id: nodeWithReadingsId, readingType: dsReadingtypes | dfReadingtypes, gt?: number, gte?: number, lte?: number) => {
     const a = id.split(' ');
-    let type = "";
-    if (a[0] === "datafeed") {
-        type = "dfreadings";
-    }
-    else if (a[0] === "datastream") {
-        type = "dsreadings";
-    }
-    else {
+    if (a[0] !== "datafeed" && a[0] !== "datastream") {
         throw new Error(`Unknown type: ${id}, cannot bring selected node readings`);
     }
     const pk = a[1];
     const qs_arr = [];
-    if (from !== undefined) qs_arr.push(`gte=${from}`);
-    if (to !== undefined) qs_arr.push(`lte=${to}`);
+    if (gt !== undefined) qs_arr.push(`gte=${gt}`);
+    else if (gte !== undefined) qs_arr.push(`gte=${gte}`);
+    if (lte !== undefined) qs_arr.push(`lte=${lte}`);
     const queryStr = qs_arr.join("&");
-    const reqSubStr = `${type}/${pk}/?${queryStr}`;
+    const reqSubStr = `${readingType.toLowerCase()}/${pk}/?${queryStr}`;
     const response = await fetch(`${BASE_URL}${reqSubStr}`);
     if (response.ok !== true) {
         throw new Error(`Failed to bring ${id} readings, ${response.statusText}`);
     }
     const json = await response.json();
     return json;
-};
-
-
-// brings readings for datafeeds, datastreams as well as for applications
-const getNodeReadings = async (ids: string[], from?: number, to?: number) => {
-    let readings: any = {};
-    let itemsCounter = 0;
-    let failedItemsCounter = 0;
-    for (let id of ids) {
-        itemsCounter++;
-        try {
-            const newIndReadings = await getIndReadings(id, from, to);
-            readings = { ...readings, ...newIndReadings };
-        }
-        catch (e) {
-            failedItemsCounter++;
-            console.log(`Cannot bring app df readings for ${id}: ${e}`);
-        }
-    }
-    if (itemsCounter === failedItemsCounter) {
-        throw new Error("Cannot bring app df readings");
-    }
-    return readings;
 };
 
 export { getNodes, getNodeData, getNodeReadings };

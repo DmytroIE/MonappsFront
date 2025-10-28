@@ -12,6 +12,14 @@ import TabPanel from '../TabPanel/TabPanel';
 import { a11yProps } from '../TabPanel/TabPanel';
 import { fetchNodeReadings } from "../NodeTree/treeSlice";
 
+const getAllDsReadings = (id, dispatch) => {
+  dispatch(fetchNodeReadings({ id, readingType: 'dsReadings' }));
+  dispatch(fetchNodeReadings({ id, readingType: 'unusDsReadings' }));
+  dispatch(fetchNodeReadings({ id, readingType: 'invDsReadings' }));
+  dispatch(fetchNodeReadings({ id, readingType: 'norcDsReadings' }));
+  dispatch(fetchNodeReadings({ id, readingType: 'ndMarkers' }));
+  dispatch(fetchNodeReadings({ id, readingType: 'unusNdMarkers' }));
+};
 
 export default function DatastreamArea({ id }) {
   const [value, setValue] = React.useState(0);
@@ -27,7 +35,7 @@ export default function DatastreamArea({ id }) {
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
           <Tab label="Properties" {...a11yProps(0)} />
-          <Tab label="Graphs" {...a11yProps(1)} onClick={() => {dispatch(fetchNodeReadings({ ids: [id] }));}} />
+          <Tab label="Graphs" {...a11yProps(1)} onClick={() => {getAllDsReadings(id, dispatch);}} />
           <Tab label="Alarm log" {...a11yProps(2)} />
         </Tabs>
       </Box>

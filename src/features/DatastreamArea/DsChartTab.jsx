@@ -45,7 +45,16 @@ function DsChartTab({ id }) {
 
     if (readingsLoadingState === 'pending') {
         return <CircularProgress />;
-    } else {
+    } 
+    else if (selNodeReadings[id] === undefined) {
+        if (readingsLoadingState === 'error') {
+            return <Typography variant='h3' sx={{ textAlign: "center" }}>Data fetch failed</Typography>;
+        }
+        else {
+            return <Typography variant='h3' sx={{ textAlign: "center" }}>No data or data is corrupted</Typography>;
+        }
+    }
+    else {
         const colorObj = { r: 35, g: 99, b: 132 };
 
         const chartData = createDsChartData(selNodeReadings[id], nodeData, colorObj);

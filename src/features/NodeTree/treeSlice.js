@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { getNodes, getNodeData, getNodeReadings } from '../../services/api';
+// import { stat } from 'fs';
 
 
 // thunks
@@ -23,8 +24,8 @@ export const fetchNodeData = createAsyncThunk(
 export const fetchNodeReadings = createAsyncThunk(
   'tree/fetchNodeReadings',
   async (arg) => {
-    const { ids, from, to } = arg;
-    const readings = await getNodeReadings(ids, from, to);
+    const { id, readingType, gt, gte, lte } = arg;
+    const readings = await getNodeReadings(id, readingType, gt, gte, lte);
     return readings;
   }
 )
@@ -34,6 +35,7 @@ export const fetchNodeReadings = createAsyncThunk(
 const initialState = {
   selNodeId: null,
   selNodeReadings: {},
+  selNodeRawReadings: {},
   nodes: {},
   treeLoadingState: 'idle',
   nodeDataLoadingState: 'idle',
@@ -63,6 +65,7 @@ export const treeSlice = createSlice({
     },
     clearSelNodeReadings: (state, action) => {
       state.selNodeReadings = {};
+      state.selNodeRawReadings = {};
     }
   },
   extraReducers: (builder) => {
@@ -98,38 +101,52 @@ export const treeSlice = createSlice({
       state.selNodeReadingsLoadingState = 'pending';
     });
     builder.addCase(fetchNodeReadings.fulfilled, (state, action) => {
-      state.selNodeReadingsLoadingState = 'idle';
+
       // console.log("fetchNodeReadings.fulfilled");
       // console.log(action.payload);
-      for (let itemId in action.payload) {
+      const itemId = action.payload.id;
+      const readingType = action.payload.readingType;
+      const readingMap = {};
 
-        if (state.selNodeReadings[itemId] === undefined) {
-          const readings = {};
-          for (const readingType in action.payload[itemId]) {
-            const readingMap = {};
-            for (let reading of action.payload[itemId][readingType]) {
-              readingMap[reading.t] = reading;
-            }
-            readings[readingType] = readingMap;
-          }
-          state.selNodeReadings[itemId] = readings;
-        }
-        else {
-          for (const readingType in action.payload[itemId]) {
-            const readingMap = {};
-            for (let reading of action.payload[itemId][readingType]) {
-              readingMap[reading.t] = reading;
-            }
-            const updatedReadings = { ...state.selNodeReadings[itemId][readingType], ...readingMap };
-            // console.log('update state.selTreeNodeReadings');
-            state.selNodeReadings[itemId][readingType] = updatedReadings;
-          }
-        }
+      if (action.payload.batch.length === 0) {
+        return;
       }
+
+      for (let reading of action.payload.batch) {
+        readingMap[reading.t] = reading;
+      }
+
+      if (state.selNodeRawReadings[itemId] === undefined) {
+        state.selNodeRawReadings[itemId] = {};
+        state.selNodeRawReadings[itemId][readingType] = readingMap;
+      }
+      else {
+        const updatedReadings = { ...state.selNodeRawReadings[itemId][readingType], ...readingMap };
+        state.selNodeRawReadings[itemId][readingType] = updatedReadings;
+      }
+
+      //
+      if (action.payload.batch.at(-1).t === action.payload.lastReadingTs) {
+          state.selNodeReadingsLoadingState = 'success';
+          if (state.selNodeReadings[itemId] === undefined) {
+            state.selNodeReadings[itemId] = {};
+          }
+          state.selNodeReadings[itemId][readingType] = state.selNodeRawReadings[itemId][readingType];
+      }
+      
+      // here should be resampling
+      // if (state.selNodeReadings[itemId] === undefined) {
+      //   state.selNodeReadings[itemId] = {};
+      //   state.selNodeReadings[itemId][readingType] = readingMap;
+      // }
+      // else {
+      //   const updatedReadings = { ...state.selNodeReadings[itemId][readingType], ...readingMap };
+      //   state.selNodeReadings[itemId][readingType] = updatedReadings;
+      // }
+
     });
     builder.addCase(fetchNodeReadings.rejected, (state, action) => {
-      state.selNodeReadingsLoadingState = 'idle';
-      //console.log("rejected");
+      state.selNodeReadingsLoadingState = 'error';
       state.selNodeReadings = {}
     });
   },
