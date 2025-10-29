@@ -84,7 +84,16 @@ function AppChartTab({ id }) {
         const datasets = [];
         for (const datafeed of datafeeds) {
             const colorObj = colorObjGenerator.next().value;
-            const chartData = createDfChartData(selNodeReadings[datafeed.id], datafeed, colorObj);
+
+            const readingMaps = {};
+            for (const indInfo of selNodeReadings) {
+                if (indInfo.id !== datafeed.id || indInfo.readingType !== 'dfReadings') {
+                    continue;
+                }
+                readingMaps['dfReadings'] = indInfo.readings;
+            }
+
+            const chartData = createDfChartData(readingMaps, datafeed, colorObj);
             // console.log("AppChartTab");
             // console.log(datafeed.id);
             // console.log(chartData);

@@ -26,7 +26,7 @@ export default function DatafeedArea({ id }) {
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
           <Tab label="Properties" {...a11yProps(0)} />
-          <Tab label="Graphs" {...a11yProps(1)} onClick={() => {dispatch(fetchNodeReadings({ ids: [id] }));}}/>
+          <Tab label="Graphs" {...a11yProps(1)} onClick={() => {dispatch(fetchNodeReadings({ items: [{id, readingType: 'dfReadings'}] }));}}/>
         </Tabs>
       </Box>
       <TabPanel value={value} index={0}>

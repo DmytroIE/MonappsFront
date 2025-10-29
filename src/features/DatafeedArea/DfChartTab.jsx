@@ -46,7 +46,15 @@ function DfChartTab({ id }) {
         return <CircularProgress />;
     } else {
         const colorObj = { r: 255, g: 99, b: 132 };
-        const chartData = createDfChartData(selNodeReadings[id], nodeData, colorObj);
+
+        const readingMaps = {};
+        for (const indInfo of selNodeReadings) {
+            if (indInfo.id !== id) {
+                continue;
+            }
+            readingMaps['dfReadings'] = indInfo.readings;
+        }
+        const chartData = createDfChartData(readingMaps, nodeData, colorObj);
         //console.log(chartData);
         if (chartData.datasets.length === 0) {
             return <Typography variant='h3' sx={{ textAlign: "center" }}>No data or data is corrupted</Typography>;

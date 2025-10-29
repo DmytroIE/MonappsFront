@@ -24,8 +24,8 @@ export const fetchNodeData = createAsyncThunk(
 export const fetchNodeReadings = createAsyncThunk(
   'tree/fetchNodeReadings',
   async (arg) => {
-    const { id, readingType, gt, gte, lte } = arg;
-    const readings = await getNodeReadings(id, readingType, gt, gte, lte);
+    const { items } = arg;
+    const readings = await getNodeReadings(items);
     return readings;
   }
 )
@@ -34,8 +34,7 @@ export const fetchNodeReadings = createAsyncThunk(
 // slice
 const initialState = {
   selNodeId: null,
-  selNodeReadings: {},
-  selNodeRawReadings: {},
+  selNodeReadings: [],
   nodes: {},
   treeLoadingState: 'idle',
   nodeDataLoadingState: 'idle',
@@ -64,8 +63,7 @@ export const treeSlice = createSlice({
       delete state.nodes[action.payload.id];
     },
     clearSelNodeReadings: (state, action) => {
-      state.selNodeReadings = {};
-      state.selNodeRawReadings = {};
+      state.selNodeReadings = [];
     }
   },
   extraReducers: (builder) => {
@@ -101,53 +99,13 @@ export const treeSlice = createSlice({
       state.selNodeReadingsLoadingState = 'pending';
     });
     builder.addCase(fetchNodeReadings.fulfilled, (state, action) => {
-
-      // console.log("fetchNodeReadings.fulfilled");
-      // console.log(action.payload);
-      const itemId = action.payload.id;
-      const readingType = action.payload.readingType;
-      const readingMap = {};
-
-      if (action.payload.batch.length === 0) {
-        return;
-      }
-
-      for (let reading of action.payload.batch) {
-        readingMap[reading.t] = reading;
-      }
-
-      if (state.selNodeRawReadings[itemId] === undefined) {
-        state.selNodeRawReadings[itemId] = {};
-        state.selNodeRawReadings[itemId][readingType] = readingMap;
-      }
-      else {
-        const updatedReadings = { ...state.selNodeRawReadings[itemId][readingType], ...readingMap };
-        state.selNodeRawReadings[itemId][readingType] = updatedReadings;
-      }
-
-      //
-      if (action.payload.batch.at(-1).t === action.payload.lastReadingTs) {
-          state.selNodeReadingsLoadingState = 'success';
-          if (state.selNodeReadings[itemId] === undefined) {
-            state.selNodeReadings[itemId] = {};
-          }
-          state.selNodeReadings[itemId][readingType] = state.selNodeRawReadings[itemId][readingType];
-      }
-      
-      // here should be resampling
-      // if (state.selNodeReadings[itemId] === undefined) {
-      //   state.selNodeReadings[itemId] = {};
-      //   state.selNodeReadings[itemId][readingType] = readingMap;
-      // }
-      // else {
-      //   const updatedReadings = { ...state.selNodeReadings[itemId][readingType], ...readingMap };
-      //   state.selNodeReadings[itemId][readingType] = updatedReadings;
-      // }
+      state.selNodeReadingsLoadingState = 'idle';
+      state.selNodeReadings = action.payload
 
     });
     builder.addCase(fetchNodeReadings.rejected, (state, action) => {
-      state.selNodeReadingsLoadingState = 'error';
-      state.selNodeReadings = {}
+      state.selNodeReadingsLoadingState = 'idle';
+      state.selNodeReadings = []
     });
   },
 })

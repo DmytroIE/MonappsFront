@@ -46,18 +46,17 @@ function DsChartTab({ id }) {
     if (readingsLoadingState === 'pending') {
         return <CircularProgress />;
     } 
-    else if (selNodeReadings[id] === undefined) {
-        if (readingsLoadingState === 'error') {
-            return <Typography variant='h3' sx={{ textAlign: "center" }}>Data fetch failed</Typography>;
-        }
-        else {
-            return <Typography variant='h3' sx={{ textAlign: "center" }}>No data or data is corrupted</Typography>;
-        }
-    }
     else {
         const colorObj = { r: 35, g: 99, b: 132 };
+        const readingMaps = {};
+        for (const indInfo of selNodeReadings) {
+            if (indInfo.id !== id) {
+                continue;
+            }
+            readingMaps[indInfo.readingType] = indInfo.readings;
+        }
 
-        const chartData = createDsChartData(selNodeReadings[id], nodeData, colorObj);
+        const chartData = createDsChartData(readingMaps, nodeData, colorObj);
         // const labels = chartData.labels;
         //console.log(chartData);
         if (chartData.datasets.length === 0) {

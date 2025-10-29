@@ -29,13 +29,14 @@ export default function ApplicationArea({ id }) {
   const dispatch = useDispatch();
 
   const datafeedIds = useSelector((state) => getDatafeedIds(state, id));
+  const dfItems = datafeedIds.map(id => ({id, readingType: 'dfReadings'}));
 
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
           <Tab label="Properties" {...a11yProps(0)} />
-          <Tab label="Graphs" {...a11yProps(1)} onClick={() => { dispatch(fetchNodeReadings({ ids: datafeedIds })); }} />
+          <Tab label="Graphs" {...a11yProps(1)} onClick={() => { dispatch(fetchNodeReadings({ items: dfItems })); }} />
           <Tab label="Alarm log" {...a11yProps(2)} />
         </Tabs>
       </Box>

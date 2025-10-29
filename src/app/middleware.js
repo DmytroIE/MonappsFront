@@ -68,26 +68,25 @@ export const selNodeMiddleware = store => next => action => {
 };
 
 
-export const fetchReadingsMiddleware = store => next => action => {
+export const getNodeDataMiddleware = store => next => action => {
     next(action);
-    if (action.type === "tree/fetchNodeReadings/fulfilled") {
+    if (action.type === "tree/selectNode") {
         const selNodeId = store.getState().tree.selNodeId;
-        if (action.payload.id !== selNodeId) {
-            // the readings are not for the selected node, which is impossible, but just in case
-            return;
+        const type = selNodeId.split(' ')[0];
+        if (type === 'datafeed') {
+            store.dispatch(fetchNodeReadings({ items: [{id: selNodeId, readingType: 'dfReadings', qty: 0}]}));
         }
-        if (action.payload.batch.length === 0) {
-            // a special case when the 'qty' parameter is set to 0
-            return;
+        else if (type === 'datastream') {
+            store.dispatch(fetchNodeReadings({
+                items:[
+                    { id: selNodeId, readingType: 'dsReadings', qty: 0},
+                    { id: selNodeId, readingType: 'unusDsReadings', qty: 0},
+                    { id: selNodeId, readingType: 'invDsReadings', qty: 0},
+                    { id: selNodeId, readingType: 'norcDsReadings', qty: 0},
+                    { id: selNodeId, readingType: 'ndMarkers', qty: 0},
+                    { id: selNodeId, readingType: 'unusNdMarkers', qty: 0}
+                ]
+            }));
         }
-        const readingType = action.payload.readingType;
-        const rawReadings = store.getState().tree.selNodeRawReadings[selNodeId][readingType];
-        const lastReadingTsInStore = Object.keys(rawReadings).sort().at(-1);
-        if (lastReadingTsInStore >= action.payload.lastReadingTs) {
-            // the last reading is already in the store
-            console.log("fetchReadingsMiddleware - the last reading is already in the store");
-            return;
-        }
-        setTimeout(() => store.dispatch(fetchNodeReadings({ id: action.payload.id, readingType, gt: lastReadingTsInStore })), 100);
     }
 };
