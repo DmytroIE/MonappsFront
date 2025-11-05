@@ -38,7 +38,6 @@ function createTreeFromNodes(nodes) {
             tree.push(node_c);
         }
     }
-    // console.log(interimStorage);
     return tree;
 }
 

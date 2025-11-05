@@ -29,4 +29,6 @@ function createGrid(startRts, endRts, tResample) {
     return grid;
 }
 
-export {ceilTimestamp, floorTimestamp, createGrid};
+const dtFormatter = new Intl.DateTimeFormat("en-GB", { hour12: false, dateStyle: "short", timeStyle: "medium" });
+
+export {ceilTimestamp, floorTimestamp, createGrid, dtFormatter};

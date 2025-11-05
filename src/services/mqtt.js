@@ -48,9 +48,7 @@ export function createMqttClient(dispatch) {
     })
 
     client.on('message', (topic, message, packet) => {
-        //onsole.log(topic);
         if (client.notAllowedToPushData) {
-            //console.log("doesn't get data right after initialization");
             return;
         }
         try {

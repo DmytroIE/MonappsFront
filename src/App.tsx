@@ -10,10 +10,6 @@ import "./style.css"
 function App() {
   const [nav, setNav] = useState(false);
 
-  // useEffect(() => {
-  //   console.log(' v navnavnavnav==>', nav)
-  // }, [nav])
-
   return (
     <div className="App">
       <Navbar addStyles={{ flexGrow: 0 }} data={{ setNav }} />

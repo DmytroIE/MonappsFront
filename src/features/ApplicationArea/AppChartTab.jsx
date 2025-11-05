@@ -94,20 +94,17 @@ function AppChartTab({ id }) {
             }
 
             const chartData = createDfChartData(readingMaps, datafeed, colorObj);
-            // console.log("AppChartTab");
-            // console.log(datafeed.id);
-            // console.log(chartData);
+
             if (datafeed.name === 'Status' || datafeed.name === 'Current state') {
                 for (const dataset of chartData.datasets) {
                     dataset.yAxisID = 'y2';
                 }
             }
             datasets.push(...chartData.datasets);
-            maxTs = Math.max(maxTs, chartData.maxTs);
-            minTs = Math.min(minTs, chartData.minTs);
+            maxTs = Math.max(maxTs, chartData.endTs);
+            minTs = Math.min(minTs, chartData.startTs);
         }
 
-        //console.log(chartData.maxTs);
         const numOfMinutes = Math.floor((maxTs - minTs) / 60000);
         const canvaswidth = numOfMinutes > 50 ? numOfMinutes * 20 : 2000;
 

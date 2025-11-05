@@ -38,9 +38,6 @@ function DfChartTab({ id }) {
     const selNodeReadings = useSelector((state) => state.tree.selNodeReadings);
     const nodeData = useSelector((state) => state.tree.nodes[id]);
     const readingsLoadingState = useSelector((state) => state.tree.selNodeReadingsLoadingState);
-    //console.log("DfChartTab");
-    //console.log(selNodeReadings);
-    //console.log(readingsLoadingState);
 
     if (readingsLoadingState === 'pending') {
         return <CircularProgress />;
@@ -55,13 +52,11 @@ function DfChartTab({ id }) {
             readingMaps['dfReadings'] = indInfo.readings;
         }
         const chartData = createDfChartData(readingMaps, nodeData, colorObj);
-        //console.log(chartData);
         if (chartData.datasets.length === 0) {
             return <Typography variant='h3' sx={{ textAlign: "center" }}>No data or data is corrupted</Typography>;
         }
 
-        //console.log(chartData.maxTs);
-        const numOfMinutes = Math.floor((chartData.maxTs - chartData.minTs) / 60000);
+        const numOfMinutes = Math.floor((chartData.endTs - chartData.startTs) / 60000);
         const canvaswidth = numOfMinutes > 50 ? numOfMinutes * 20 : 1000;
 
         return (

@@ -1,35 +1,34 @@
+import ts from "typescript";
+import { VarTypes, Reading, NdmReading, ReadingMap, NdmReadingMap } from "../types";
+import { groupDsReadings } from "./resampling";
+import { light } from "@mui/material/styles/createPalette";
+import { dtFormatter } from "../utils/timeUtils";
+
 const createData = ([t, obj]: [t: string, obj: { v: number } | null]) => [+t, obj ? obj.v : obj]
 
 const getUpdatedEdgeTimestamps = (keys: string[], chartData: ChartData) => {
     const timestamps = keys.map(x => +x);
-    const minTs = Math.min(...timestamps);
-    const maxTs = Math.max(...timestamps);
-    return [Math.min(minTs, chartData.minTs), Math.max(maxTs, chartData.maxTs)];
+    const startTs = Math.min(...timestamps);
+    const endTs = Math.max(...timestamps);
+    return [Math.min(startTs, chartData.startTs), Math.max(endTs, chartData.endTs)];
 }
 
-// --DfReadings--
-
-enum VarTypes {
-    CONTINUOUS = 0,
-    DISCRETE = 1,
-    NOMINAL = 3,
-    ORDINAL = 4
-}
-
-type DfReadingMap = { [key: string]: { t: number, v: number, r: boolean } };
-type DsReadingMap = { [key: string]: { t: number, v: number } }
-type NdMarkerMap = { [key: string]: { t: number, v: null } }
 type ReadingMaps = {
-    dfReadings?: DfReadingMap,
-    dsReadings?: DsReadingMap,
-    invDsReadings?: DsReadingMap,
-    unusDsReadings?: DsReadingMap,
-    norcDsReadings?: DsReadingMap,
-    ndMarkers?: NdMarkerMap,
-    unusNdMarkers?: NdMarkerMap
+    dfReadings?: ReadingMap,
+    dsReadings?: ReadingMap,
+    invDsReadings?: ReadingMap,
+    unusDsReadings?: ReadingMap,
+    norcDsReadings?: ReadingMap,
+    ndMarkers?: NdmReadingMap,
+    unusNdMarkers?: NdmReadingMap
 }
 
-type ChartData = { datasets: any[], ndMarkerSets?: any[], minTs: number, maxTs: number }
+type ChartData = {
+    datasets: any[],
+    annotations: { [key: string]: any },
+    startTs: number,
+    endTs: number
+}
 
 
 function createDfChartData(
@@ -39,8 +38,9 @@ function createDfChartData(
 ) {
     const chartData: ChartData = {
         datasets: [],
-        minTs: Infinity,
-        maxTs: 0
+        annotations: {},
+        startTs: Infinity,
+        endTs: 0
     }
     const tResample = dfInfo.tResample || dfInfo.timeResample;
     if (tResample === undefined) {
@@ -54,7 +54,7 @@ function createDfChartData(
         const reversedBgColor = `rgba(${255 - colorObj.r}, ${255 - colorObj.g}, ${255 - colorObj.b}, 0.5)`;
         const stepped = dfInfo.varType === VarTypes.NOMINAL || dfInfo.varType === VarTypes.ORDINAL;
         // injecting null values to ensure gaps between points
-        const augmentedDfReadingMap: { [key: string]: { t: number, v: number, r: boolean } | null } = {};
+        const augmentedDfReadingMap: { [key: string]: { t: number, v: number, r?: boolean } | null } = {};
         for (const [tsStr, obj] of Object.entries(readingMaps.dfReadings)) {
             augmentedDfReadingMap[tsStr] = obj;
             const nextTsInGrid = (+tsStr) + tResample;
@@ -65,7 +65,7 @@ function createDfChartData(
 
         const data = Object.entries(augmentedDfReadingMap).map(createData);
 
-        [chartData.minTs, chartData.maxTs] = getUpdatedEdgeTimestamps(Object.keys(readingMaps.dfReadings), chartData);
+        [chartData.startTs, chartData.endTs] = getUpdatedEdgeTimestamps(Object.keys(readingMaps.dfReadings), chartData);
 
         let dfrDataset: { [key: string]: any } =
         {
@@ -97,104 +97,150 @@ function createDfChartData(
     return chartData;
 }
 
-// --DsReadings--
+//-------------------------------------------------------------------------------------------------------------------
 
+const prepareDsDatasets = (
+    chartData: ChartData,
+    readingMap: ReadingMap,
+    timeResample: number,
+    timeGrouping: number,
+    label: string,
+    r: number,
+    g: number,
+    b: number,
+    pointRadius: number,
+    pointStyle: string) => {
+    const { singleReadingMap, groupedReadingMap } = groupDsReadings(readingMap, timeResample, timeGrouping);
+    const color = `rgb(${r}, ${g}, ${b})`;
+    const lightColor = `rgba(${r}, ${g}, ${b}, 0.2)`;
+    const dsrDataset: { [key: string]: any } = {
+        fill: false,
+        showLine: false,
+        spanGaps: false,
+        pointBorderColor: color,
+        pointBackgroundColor: lightColor,
+        label,
+        data: Object.values(singleReadingMap).map((obj) => [obj.t, obj.v]),
+        pointStyle,
+        pointRadius
+    };
+    chartData.datasets.push(dsrDataset);
 
+    [chartData.startTs, chartData.endTs] = getUpdatedEdgeTimestamps(Object.keys(readingMap), chartData);
+
+    const initGroupObj = {
+        type: 'box',
+        backgroundColor: lightColor,
+        borderColor: color,
+        borderWidth: 1,
+    }
+    for (const [tsStr, obj] of Object.entries(groupedReadingMap)) {
+        chartData.annotations[tsStr] = {
+            ...initGroupObj,
+            xMin: obj.t,
+            yMin: obj.v,
+            xMax: obj.t2,
+            yMax: obj.v2,
+            label: {
+                display: false,
+                drawTime: 'afterDatasetsDraw',
+                color: color,
+                backgroundColor: color,
+                content: [label, `${obj.v} - ${obj.v2}`],
+                position: {
+                    x: '0%',
+                    y: '0%'
+                }
+            },
+            enter({ element }: any) {
+                console.log(element.constructor.name);
+                element.label.options.display = true;
+                return true;
+            },
+            leave({ element }: any) {
+                element.label.options.display = false;
+                return true;
+            }
+        }
+    }
+}
+
+const prepareNdmAnnotations = (
+    chartData: ChartData,
+    ndmReadingMap: NdmReadingMap,
+    label: string,
+    width: number,
+    r: number,
+    g: number,
+    b: number) => {
+    const color = `rgb(${r}, ${g}, ${b})`;
+    const lightColor = `rgba(${r}, ${g}, ${b}, 0.2)`;
+    for (const reading of Object.values(ndmReadingMap)) {
+        chartData.annotations[reading.t] = ({
+            type: 'line',
+            borderColor: color,
+            borderWidth: width,
+            scaleID: 'x',
+            value: reading.t,
+            label: {
+                display: false,
+                drawTime: 'afterDatasetsDraw',
+                color: color,
+                backgroundColor: lightColor,
+                content: [label, dtFormatter.format(new Date(reading.t))],
+                position: {
+                    x: '0%',
+                    y: '0%'
+                }
+            },
+            enter({ element }: any) {
+                element.label.options.display = true;
+                return true;
+            },
+            leave({ element }: any) {
+                element.label.options.display = false;
+                return true;
+            }
+        });
+    }
+}
 
 
 function createDsChartData(
     readingMaps: ReadingMaps,
     dsInfo: { name: string },
-    colorObj: { r: number, g: number, b: number }
+    maxClusterTimeSpan: number,
+    timeGrouping: number,
 ) {
-    // console.log("createDsChartData")
-    // console.log(readingMaps)
+
     const chartData: ChartData = {
         datasets: [],
-        ndMarkerSets: [],
-        minTs: Infinity,
-        maxTs: 0
+        annotations: {},
+        startTs: Infinity,
+        endTs: 0
     }
 
-    const pointBorderColor = `rgb(${colorObj.r}, ${colorObj.g}, ${colorObj.b})`;
-    const pointBackgroundColor = `rgba(${colorObj.r}, ${colorObj.g}, ${colorObj.b}, 0.5)`;
-
-    const initDsrSet = {
-        fill: false,
-        showLine: false,
-        spanGaps: false,
-        pointBorderColor,
-        pointBackgroundColor,
-        pointRadius: 6,
-        pointBorderWidth: 1,
-    }
 
     if (readingMaps.dsReadings !== undefined && Object.keys(readingMaps.dsReadings).length > 0) {
-        const data = Object.entries(readingMaps.dsReadings).map(createData);
-        const dsrDataset: { [key: string]: any } = {
-            ...initDsrSet,
-            label: `${dsInfo.name}-dsr`,
-            data,
-            pointStyle: "crossRot",
-        };
-        chartData.datasets.push(dsrDataset);
-        [chartData.minTs, chartData.maxTs] = getUpdatedEdgeTimestamps(Object.keys(readingMaps.dsReadings), chartData);
-
-
+        prepareDsDatasets(chartData, readingMaps.dsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-dsr`, 0, 255, 0, 5, "crossRot");
     }
     if (readingMaps.unusDsReadings !== undefined && Object.keys(readingMaps.unusDsReadings).length > 0) {
-        const data = Object.entries(readingMaps.unusDsReadings).map(createData);
-        const unusDsrDataset: { [key: string]: any } = {
-            ...initDsrSet,
-            label: `${dsInfo.name}-unusDsr`,
-            data,
-            pointStyle: "rectRot",
-        };
-        chartData.datasets.push(unusDsrDataset);
-        [chartData.minTs, chartData.maxTs] = getUpdatedEdgeTimestamps(Object.keys(readingMaps.unusDsReadings), chartData);
+        prepareDsDatasets(chartData, readingMaps.unusDsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-unusDsr`, 127, 127, 127, 6, "rectRot");
     }
+
     if (readingMaps.invDsReadings !== undefined && Object.keys(readingMaps.invDsReadings).length > 0) {
-        const data = Object.entries(readingMaps.invDsReadings).map(createData);
-        const invDsrDataset: { [key: string]: any } = {
-            ...initDsrSet,
-            label: `${dsInfo.name}-invDsr`,
-            data,
-            pointStyle: "cross",
-            pointRadius: 8,
-            pointBorderWidth: 2
-        };
-        chartData.datasets.push(invDsrDataset);
-        [chartData.minTs, chartData.maxTs] = getUpdatedEdgeTimestamps(Object.keys(readingMaps.invDsReadings), chartData);
+        prepareDsDatasets(chartData, readingMaps.invDsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-invDsr`, 255, 0, 0, 8, "cross");
     }
     if (readingMaps.norcDsReadings !== undefined && Object.keys(readingMaps.norcDsReadings).length > 0) {
-        const data = Object.entries(readingMaps.norcDsReadings).map(createData);
-        const norcDsrDataset: { [key: string]: any } = {
-            ...initDsrSet,
-            label: `${dsInfo.name}-norcDsr`,
-            data,
-            pointStyle: "rectRounded",
-            pointRadius: 4,
-        };
-        chartData.datasets.push(norcDsrDataset);
-        [chartData.minTs, chartData.maxTs] = getUpdatedEdgeTimestamps(Object.keys(readingMaps.norcDsReadings), chartData);
+        prepareDsDatasets(chartData, readingMaps.norcDsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-norcDsr`, 0, 0, 255, 4, "rectRounded");
     }
+
     if (readingMaps.ndMarkers !== undefined && Object.keys(readingMaps.ndMarkers).length > 0) {
-        const strokeStyle = `#${colorObj.r.toString(16)}${colorObj.g.toString(16)}${colorObj.b.toString(16)}`;
-        if (chartData.ndMarkerSets === undefined) {
-            chartData.ndMarkerSets = [];
-        }
-        for (const nd of Object.values(readingMaps.ndMarkers)) {
-            chartData.ndMarkerSets.push({ pointIndex: nd.t, strokeStyle });
-        }
+        prepareNdmAnnotations(chartData, readingMaps.ndMarkers, `${dsInfo.name}-ndm`, 3, 0, 0, 0);
+
     }
     if (readingMaps.unusNdMarkers !== undefined && Object.keys(readingMaps.unusNdMarkers).length > 0) {
-        const strokeStyle = `#${colorObj.r.toString(16)}${colorObj.g.toString(16)}${colorObj.b.toString(16)}4F`;
-        if (chartData.ndMarkerSets === undefined) {
-            chartData.ndMarkerSets = [];
-        }
-        for (const nd of Object.values(readingMaps.unusNdMarkers)) {
-            chartData.ndMarkerSets.push({ pointIndex: nd.t, strokeStyle });
-        }
+        prepareNdmAnnotations(chartData, readingMaps.unusNdMarkers, `${dsInfo.name}-unusNdm`, 1, 127, 127, 127);
     }
     return chartData;
 }

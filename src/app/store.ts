@@ -9,7 +9,7 @@ export const store = configureStore({
     tree: treeReducer,
   },
   middleware: getDefaultMiddleware =>
-    getDefaultMiddleware().concat(mqttMiddleware).concat(selNodeMiddleware).concat(getNodeDataMiddleware),
+    getDefaultMiddleware().concat(mqttMiddleware).concat(selNodeMiddleware)//.concat(getNodeDataMiddleware),
 })
 
 export type RootState = ReturnType<typeof store.getState>
