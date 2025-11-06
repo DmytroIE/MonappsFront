@@ -30,6 +30,26 @@
     cursor: pointer;
 }
 
+.node-content-asset {
+    background-color: rgb(214, 215, 232);
+}
+
+.node-content-application {
+    background-color: rgb(201, 223, 217);
+}
+
+.node-content-datafeed {
+    background-color: rgb(218, 228, 225);
+}
+
+.node-content-device {
+    background-color: rgb(176, 200, 224);
+}
+
+.node-content-datastream {
+    background-color: rgb(205, 218, 231);
+}
+
 .node-selected {
     background-color: rgba(219, 155, 53, 0.2);
 }

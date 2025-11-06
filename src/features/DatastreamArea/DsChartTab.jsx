@@ -19,7 +19,7 @@ import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
-import { createDsChartData } from "../../utils/chartUtils";
+import { createDsChartData, getTimeUnitAndDivider } from "../../utils/chartUtils";
 import { dtFormatter } from "../../utils/timeUtils";
 
 
@@ -39,7 +39,7 @@ ChartJS.register(
 );
 
 
-function DsChartTab({ id, quantTime, readingInfos }) {
+function DsChartTab({ id, quantTime, readingInfos, setDtRange }) {
     const nodeData = useSelector((state) => state.tree.nodes[id]);
     const readingsLoadingState = useSelector((state) => state.tree.selNodeReadingsLoadingState);
 
@@ -54,64 +54,26 @@ function DsChartTab({ id, quantTime, readingInfos }) {
             }
             readingMaps[indInfo.readingType] = indInfo.readings;
         }
-
-        const chartData = createDsChartData(readingMaps, nodeData, quantTime, quantTime * 5);
+        const chartData = createDsChartData(readingMaps, nodeData, quantTime * 5, quantTime, (newRange) => setDtRange(newRange));
 
         if (chartData.datasets.length === 0) {
-            return <Typography variant='h3' sx={{ textAlign: "center" }}>No data or data is corrupted</Typography>;
+            return <Typography variant='h3' sx={{ textAlign: "center", height: "500px", border: "1px solid red" }}>No data or data is corrupted</Typography>;
         }
 
         const data = { datasets: chartData.datasets };
         const annotations = chartData.annotations;
         const { startTs, endTs } = chartData; // These startTs and endTs are different from those adjusted by the dtSlider
 
-        let timeUnit;
-        let timeDivider;
-        if (quantTime <= 10000) { // 10s
-            timeUnit = 'second';
-            if (endTs - startTs < 180000) {
-                timeDivider = 5000;
-            }
-            else if (endTs - startTs < 360000) {
-                timeDivider = 10000;
-            }
-            else {
-                timeDivider = 30000;
-            }
+        if (startTs > endTs) {
+            return <Typography variant='h3' sx={{ textAlign: "center", height: "500px", border: "1px solid red" }}>No data in the selected range</Typography>;
         }
-        else if (quantTime <= 3600000) {
-            timeUnit = 'minute';
-            if (endTs - startTs < 1200000) {
-                timeDivider = 60000;
-            }
-            else if (endTs - startTs < 3600000) {
-                timeDivider = 120000;
-            }
-            else if (endTs - startTs < 7200000) {
-                timeDivider = 300000;
-            }
-            else if (endTs - startTs < 14400000) {
-                timeDivider = 600000;
-            }
-            else {
-                timeDivider = 1800000;
-            }
-        }
-        else if (quantTime <= 86400000) {
-            timeUnit = 'hour';
-            if (endTs - startTs < 864000000) { // 24 hours
-                timeDivider = 3600000;
-            }
-            else if (endTs - startTs < 1728000000) { // 48 hours
-                timeDivider = 7200000;
-            }
-            else {
-                timeDivider = 14400000;
-            }
-        }
-        else {
-            timeUnit = 'day';
-            timeDivider = 86400000;
+
+        let deltaTime = endTs - startTs;
+
+        const { timeUnit, timeDivider } = getTimeUnitAndDivider(deltaTime, startTs, endTs);
+
+        if (deltaTime === 0) { // a single reading to show
+            deltaTime = 250000; // just to get some space around the point, it will be multiplied by 0.01 later
         }
 
         return (
@@ -139,6 +101,8 @@ function DsChartTab({ id, quantTime, readingInfos }) {
                                 time: {
                                     unit: timeUnit, // the timestamps with the resolution of 'time.unit' will be passed into 'ticks.callback'
                                 },
+                                min: startTs - Math.round(deltaTime * 0.01),    // Add explicit bounds
+                                max: endTs + Math.round(deltaTime * 0.01),      // Add explicit bounds
                                 ticks: {
                                     callback: function (val) {
                                         const date = new Date(val);
@@ -147,13 +111,13 @@ function DsChartTab({ id, quantTime, readingInfos }) {
                                             if (val % 3600000 === 0) {
                                                 return dateTimeStr.split(" ")[1];
                                             }
-                                            // else if (timeUnit === 'hour') {
-                                            //     return dateTimeStr.split(" ")[1];
-                                            // }
-                                            // else if (timeUnit === 'day') {
-                                            //     return dateTimeStr.split(" ")[0];
-                                            // }
-                                            return dateTimeStr.split(":").slice(1).join(":");
+                                            else if (val % 86400000 === 0) {
+                                                return dateTimeStr.split(" ")[0];
+                                            }
+                                            else {
+                                                return dateTimeStr.split(":").slice(1).join(":");
+                                            }
+
                                         }
                                         return null;
                                     }

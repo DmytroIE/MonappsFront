@@ -10,6 +10,7 @@ type NdmReadingMap = { [ts: number | string]: NdmReading }
 type IndReadingInfo = { id: nodeWithReadingsId, readingType: dsReadingtypes | dfReadingtypes, firstReadingTs: number | null, lastReadingTs: number | null, lastFetchError: string | null, readings: ReadingMap }
 
 const resamplingTimes = [
+    1000,
     5000,
     10000,
     30000,

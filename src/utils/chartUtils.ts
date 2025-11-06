@@ -1,7 +1,5 @@
-import ts from "typescript";
-import { VarTypes, Reading, NdmReading, ReadingMap, NdmReadingMap } from "../types";
+import { VarTypes, ReadingMap, NdmReadingMap } from "../types";
 import { groupDsReadings } from "./resampling";
-import { light } from "@mui/material/styles/createPalette";
 import { dtFormatter } from "../utils/timeUtils";
 
 const createData = ([t, obj]: [t: string, obj: { v: number } | null]) => [+t, obj ? obj.v : obj]
@@ -102,15 +100,16 @@ function createDfChartData(
 const prepareDsDatasets = (
     chartData: ChartData,
     readingMap: ReadingMap,
-    timeResample: number,
+    maxClusterTimeSpan: number,
     timeGrouping: number,
     label: string,
     r: number,
     g: number,
     b: number,
     pointRadius: number,
-    pointStyle: string) => {
-    const { singleReadingMap, groupedReadingMap } = groupDsReadings(readingMap, timeResample, timeGrouping);
+    pointStyle: string,
+    setDtRange: (newRange: number[]) => void) => {
+    const { singleReadingMap, groupedReadingMap } = groupDsReadings(readingMap, maxClusterTimeSpan, timeGrouping);
     const color = `rgb(${r}, ${g}, ${b})`;
     const lightColor = `rgba(${r}, ${g}, ${b}, 0.2)`;
     const dsrDataset: { [key: string]: any } = {
@@ -153,12 +152,15 @@ const prepareDsDatasets = (
                 }
             },
             enter({ element }: any) {
-                console.log(element.constructor.name);
                 element.label.options.display = true;
                 return true;
             },
             leave({ element }: any) {
                 element.label.options.display = false;
+                return true;
+            },
+            click({ element }: any) {
+                setDtRange([element.options.xMin, element.options.xMax]);
                 return true;
             }
         }
@@ -211,6 +213,7 @@ function createDsChartData(
     dsInfo: { name: string },
     maxClusterTimeSpan: number,
     timeGrouping: number,
+    setDtRange: (newRange: number[]) => void
 ) {
 
     const chartData: ChartData = {
@@ -222,17 +225,17 @@ function createDsChartData(
 
 
     if (readingMaps.dsReadings !== undefined && Object.keys(readingMaps.dsReadings).length > 0) {
-        prepareDsDatasets(chartData, readingMaps.dsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-dsr`, 0, 255, 0, 5, "crossRot");
+        prepareDsDatasets(chartData, readingMaps.dsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-dsr`, 0, 255, 0, 5, "crossRot", setDtRange);
     }
     if (readingMaps.unusDsReadings !== undefined && Object.keys(readingMaps.unusDsReadings).length > 0) {
-        prepareDsDatasets(chartData, readingMaps.unusDsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-unusDsr`, 127, 127, 127, 6, "rectRot");
+        prepareDsDatasets(chartData, readingMaps.unusDsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-unusDsr`, 127, 127, 127, 6, "rectRot", setDtRange);
     }
 
     if (readingMaps.invDsReadings !== undefined && Object.keys(readingMaps.invDsReadings).length > 0) {
-        prepareDsDatasets(chartData, readingMaps.invDsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-invDsr`, 255, 0, 0, 8, "cross");
+        prepareDsDatasets(chartData, readingMaps.invDsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-invDsr`, 255, 0, 0, 8, "cross", setDtRange);
     }
     if (readingMaps.norcDsReadings !== undefined && Object.keys(readingMaps.norcDsReadings).length > 0) {
-        prepareDsDatasets(chartData, readingMaps.norcDsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-norcDsr`, 0, 0, 255, 4, "rectRounded");
+        prepareDsDatasets(chartData, readingMaps.norcDsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-norcDsr`, 0, 0, 255, 4, "rectRounded", setDtRange);
     }
 
     if (readingMaps.ndMarkers !== undefined && Object.keys(readingMaps.ndMarkers).length > 0) {
@@ -245,5 +248,60 @@ function createDsChartData(
     return chartData;
 }
 
+function getTimeUnitAndDivider(deltaTime: number) {
+    let timeUnit;
+    let timeDivider;
 
-export { createDfChartData, createDsChartData };
+    if (deltaTime < 600000) {
+        timeUnit = 'second';
+        if (deltaTime < 60000) {
+            timeDivider = 1000;
+        }
+        else if (deltaTime < 180000) {
+            timeDivider = 5000;
+        }
+        else if (deltaTime < 300000) {
+            timeDivider = 10000;
+        }
+        else {
+            timeDivider = 30000;
+        }
+    }
+    else if (deltaTime < 86400000) {
+        timeUnit = 'minute';
+        if (deltaTime < 1200000) {
+            timeDivider = 60000;
+        }
+        else if (deltaTime < 3600000) {
+            timeDivider = 120000;
+        }
+        else if (deltaTime < 7200000) {
+            timeDivider = 300000;
+        }
+        else if (deltaTime < 14400000) {
+            timeDivider = 600000;
+        }
+        else {
+            timeDivider = 1800000;
+        }
+    }
+    else if (deltaTime < 86400000 * 30) {
+        timeUnit = 'hour';
+        if (deltaTime < 864000000) { // 24 hours
+            timeDivider = 3600000;
+        }
+        else if (deltaTime < 1728000000) { // 48 hours
+            timeDivider = 7200000;
+        }
+        else {
+            timeDivider = 14400000;
+        }
+    }
+    else {
+        timeUnit = 'day';
+        timeDivider = 86400000;
+    }
+    return { timeUnit, timeDivider };
+}
+
+export { createDfChartData, createDsChartData, getTimeUnitAndDivider };

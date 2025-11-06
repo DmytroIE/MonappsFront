@@ -25,7 +25,7 @@ const Node = ({ node, style, dragHandle, tree }: NodeRendererProps<any>) => {
                 {!node.isLeaf ? (node.isOpen ? <ArrowDropDownIcon /> : <ArrowRightIcon />
                 ) : (<Box sx={{ width: '24px', height: '24px' }} />)}
             </span>
-            <div className={`${styles['node-content']} ${node.data.isEnabled === false ? styles['node-disabled'] : ''}`}>
+            <div className={`${styles['node-content']} ${node.data.isEnabled === false ? styles['node-disabled'] : ''} ${styles[`node-content-${type}`]}`}>
                 <InstanceIcon type={type} addStyles={{ marginRight: '5px', width: '25px', height: '25px' }} />
                 <span className={`${styles['node-text']}`}>
                     {node.data.name}
