@@ -52,7 +52,6 @@ const getIndTypeReadingInfo = async (id: nodeWithReadingsId, readingType: dsRead
     let errorCount = 0;
     let readingMap: ReadingMap = {};
     let indReadingInfo: IndReadingInfo = { id, readingType, firstReadingTs: null, lastReadingTs: null, lastFetchError: null, readings: readingMap };
-    // console.log(`Fetching ${readingType} for ${id}`);
     do {
         try {
             errorCount = 0;
@@ -78,11 +77,9 @@ const getIndTypeReadingInfo = async (id: nodeWithReadingsId, readingType: dsRead
             }
             else {
                 gt = batch[batch.length - 1].t;
-                // console.log(`Keep fetching, new gt: ${gt}`);
             }
         }
         catch (e) {
-            // console.log(e);
             errorCount++;
             if (errorCount > 3) {
                 indReadingInfo.lastFetchError = (e as Error).message;
@@ -95,7 +92,6 @@ const getIndTypeReadingInfo = async (id: nodeWithReadingsId, readingType: dsRead
 
 const getNodeReadings = async (items: Array<ReadingsRequestItem>) => {
     const promises = [];
-    // console.log('Start fetching readings');
     for (const item of items) {
         promises.push(getIndTypeReadingInfo(item.id, item.readingType, item.gt, item.gte, item.lte, item.qty));
     }

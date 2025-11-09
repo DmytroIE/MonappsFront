@@ -7,12 +7,8 @@ import SideBar from './features/SideBar/SideBar';
 
 import "./style.css"
 
-function App() {
+const App =() =>{
   const [nav, setNav] = useState(false);
-
-  // useEffect(() => {
-  //   console.log(' v navnavnavnav==>', nav)
-  // }, [nav])
 
   return (
     <div className="App">

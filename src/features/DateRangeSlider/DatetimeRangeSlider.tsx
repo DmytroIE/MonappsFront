@@ -1,45 +1,75 @@
 import { useState, useEffect, CSSProperties } from 'react';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import Slider from '@mui/material/Slider';
 
+import { dtFormatter } from "../../utils/timeUtils";
 
-export default function DatetimeRangeSlider({ minTs, maxTs, addStyles }: { minTs: number, maxTs: number, addStyles?: CSSProperties }) {
-  // Initialize with the incoming props, but keep in sync when they change
-  const [value, setValue] = useState<number[]>([minTs, maxTs]);
+type DtRangeProps = {
+  commitedDtRange: number[],
+  handleChangeCommitted: (x: number[]) => void,
+  minTs: number,
+  maxTs: number,
+  step: number
+  addStyles?: CSSProperties
+};
+
+const DtRangeSlider = (
+  { commitedDtRange,
+    handleChangeCommitted,
+    minTs,
+    maxTs,
+    step,
+    addStyles }: DtRangeProps) => {
+  const [dtRange, setDtRange] = useState([0, 0]);
+
   useEffect(() => {
-    // When minTs/maxTs change after first render, update the slider state
-    setValue([minTs, maxTs]);
-  }, [minTs, maxTs]);
-  console.log('datetime range slider');
+    setDtRange(commitedDtRange);
+  }, [commitedDtRange]);
 
-  const handleChange = (event: Event | any, newValue: number | number[]) => {
-    // Slider onChange can pass either a number or number[] depending on single/range slider
+  const onChange = (event: Event | any, newValue: number | number[]) => {
     if (Array.isArray(newValue)) {
-      console.log(newValue);
-      setValue(newValue);
+      setDtRange(newValue);
+    }
+    else {
+      setDtRange([newValue, newValue]);
     }
   };
 
-  console.log(value);
-  console.log(minTs, maxTs);
+  const onChangeCommitted = (event: Event | any, newValue: number | number[]) => {
+    if (Array.isArray(newValue)) {
+      handleChangeCommitted(newValue);
+    }
+    else {
+      handleChangeCommitted([newValue, newValue]);
+    }
+  };
+
+  if (minTs === maxTs && minTs === 0) {
+    return (
+      <Box sx={{ ...addStyles }}>
+        <Typography variant="h6" sx={{ textAlign: "center" }}>No data</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ ...addStyles }}>
       <Slider
-        sx={{ minWidth: 200, width: '70%' }}
         getAriaLabel={() => 'Datetime range'}
-        value={value}
+        value={dtRange}
         min={minTs}
         max={maxTs}
-        onChange={handleChange}
-        valueLabelDisplay="on"
-        valueLabelFormat={(x: number) => { return (new Date(x)).toISOString(); }}
-
+        onChange={onChange}
+        onChangeCommitted={onChangeCommitted}
+        step={step}
       />
+      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+        <Typography variant="h6">{dtFormatter.format(new Date(dtRange[0]))}</Typography>
+        <Typography variant="h6">{dtFormatter.format(new Date(dtRange[1]))}</Typography>
+      </Box>
     </Box>
   );
 }
+
+export default DtRangeSlider;

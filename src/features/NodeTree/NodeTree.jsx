@@ -25,7 +25,6 @@ const NodeTree = () => {
 
     const loadingState = useSelector((state) => state.tree.loadingState)
     const nodes = useSelector((state) => state.tree.nodes)
-    // console.log('height ==> ', height + 50)
 
     if (loadingState === 'pending') {
         return <CircularProgress />;

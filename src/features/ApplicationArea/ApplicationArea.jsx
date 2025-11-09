@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
@@ -11,46 +11,96 @@ import AppChartTab from './AppChartTab';
 import InstancePropsPage from '../InstancePropsPage/InstancePropsPage';
 import TabPanel from '../TabPanel/TabPanel';
 import { a11yProps } from '../TabPanel/TabPanel';
+
+import DatetimeRangeSlider from '../DateRangeSlider/DatetimeRangeSlider';
 import { fetchNodeReadings } from "../NodeTree/treeSlice";
+import { getMinMaxTsFromInfoBatch, getReadingsFromDtRange } from '../../utils/helpers';
+import { getResamplingTime } from '../../utils/resampling';
+import { MAX_NUM_POINTS_ON_CHART } from '../../types';
+import App from '../../App';
 
 
-const getDatafeedIds= createSelector(
+const getAllDfReadings = (ids, dispatch) => {
+  const items = ids.map(id => ({ id, readingType: 'dfReadings' }));
+  dispatch(fetchNodeReadings({ items }));
+}
+
+const getDfInfos = createSelector(
   [(state) => state.tree.nodes, (state, itemId) => itemId],
-  (nodes, id) => Object.values(nodes).filter((item) => item.parentId === id).map((item) => item.id)
+  (nodes, id) => Object.values(nodes).filter((item) => item.parentId === id)
 );
 
-export default function ApplicationArea({ id }) {
-  const [value, setValue] = React.useState(0);
+const getMinMaxTs = createSelector(
+  [(state) => state.tree.selNodeReadings],
+  (readingInfos) => getMinMaxTsFromInfoBatch(readingInfos)
+);
 
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
+const getReadingsFromRange = createSelector(
+  [(state) => state.tree.selNodeReadings, (state, dtRange) => dtRange],
+  (readingInfos, dtRange) => getReadingsFromDtRange(readingInfos, dtRange)
+);
+
+const ApplicationArea = ({ id }) => {
+  const [tabIdx, setTabIdx] = useState(0);
+  const [committedDtRange, setCommittedDtRange] = useState([0, 0]);
+
+  const nodeData = useSelector((state) => state.tree.nodes[id]);
+
+  const commitedTimeResample = useMemo(() =>
+    getResamplingTime(committedDtRange[0], committedDtRange[1], nodeData.timeResample, MAX_NUM_POINTS_ON_CHART),
+    [committedDtRange]
+  );
+
+  const handleTabChange = (event, newTabIdx) => {
+    setTabIdx(newTabIdx);
   };
 
+  const dfInfos = useSelector(state => getDfInfos(state, id));
+  const datafeedIds = dfInfos.map((item) => item.id);
   const dispatch = useDispatch();
+  useEffect(() => getAllDfReadings(datafeedIds, dispatch), []);
+  const { minTs, maxTs } = useSelector(getMinMaxTs);
 
-  const datafeedIds = useSelector((state) => getDatafeedIds(state, id));
-  const dfItems = datafeedIds.map(id => ({id, readingType: 'dfReadings'}));
+  useEffect(() => {
+    setCommittedDtRange([minTs, maxTs]);
+  }, [minTs, maxTs]);
+
+  const readingInfos = useSelector((state) => getReadingsFromRange(state, committedDtRange));
 
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
+        <Tabs value={tabIdx} onChange={handleTabChange} aria-label="basic tabs example">
           <Tab label="Properties" {...a11yProps(0)} />
-          <Tab label="Graphs" {...a11yProps(1)} onClick={() => { dispatch(fetchNodeReadings({ items: dfItems })); }} />
+          <Tab label="Graphs" {...a11yProps(1)} />
           <Tab label="Alarm log" {...a11yProps(2)} />
         </Tabs>
       </Box>
-      <TabPanel value={value} index={0}>
+      <TabPanel value={tabIdx} index={0}>
         <InstancePropsPage id={id} />
       </TabPanel>
-      <TabPanel value={value} index={1}>
-        {/* <Typography variant='h3' sx={{ textAlign: "center" }}>Graphs</Typography> */}
-        <AppChartTab id={id} />
+      <TabPanel value={tabIdx} index={1}>
+        <AppChartTab
+          id={id}
+          timeResample={commitedTimeResample}
+          dfInfos={dfInfos}
+          readingInfos={readingInfos} />
       </TabPanel>
-      <TabPanel value={value} index={2}>
-        {/* <Typography variant='h3' sx={{ textAlign: "center" }}>Alarm log</Typography> */}
+      <TabPanel value={tabIdx} index={2}>
         <Container>Later</Container>
       </TabPanel>
+      <Box sx={{ display: "flex", justifyContent: "space-evenly" }}>
+        <DatetimeRangeSlider
+          commitedDtRange={committedDtRange}
+          handleChangeCommitted={setCommittedDtRange}
+          minTs={minTs}
+          maxTs={maxTs}
+          step={nodeData.timeResample}
+          addStyles={{ width: '70%', p: 1 }} />
+        <Typography variant='h6'>{commitedTimeResample / 1000} s</Typography>
+      </Box>
     </Box>
   );
 }
+
+export default ApplicationArea;

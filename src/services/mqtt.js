@@ -5,7 +5,7 @@ const URL = 'ws://127.0.0.1:8084/mqtt';
 
 let client = null;
 
-export function createMqttClient(dispatch) {
+const createMqttClient = (dispatch) => {
 
     if (client instanceof mqtt.MqttClient) {
         return client;
@@ -32,7 +32,7 @@ export function createMqttClient(dispatch) {
 
     client.on('connect', () => {
         console.log('Connected to MQTT broker');
-        client.subscribe("procdata/#", { qos: 0 }, function (error, granted) {
+        client.subscribe("procdata/#", { qos: 0 }, (error, granted) => {
             if (error) {
                 console.log(error);
             } else {
@@ -48,9 +48,7 @@ export function createMqttClient(dispatch) {
     })
 
     client.on('message', (topic, message, packet) => {
-        //onsole.log(topic);
         if (client.notAllowedToPushData) {
-            //console.log("doesn't get data right after initialization");
             return;
         }
         try {
@@ -67,3 +65,5 @@ export function createMqttClient(dispatch) {
 
     return client;
 }
+
+export { createMqttClient };

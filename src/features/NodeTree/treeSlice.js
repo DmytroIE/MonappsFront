@@ -54,7 +54,6 @@ export const treeSlice = createSlice({
       if (node !== undefined) {
         state.nodes[id] = { ...node, ...action.payload };
       }
-      // console.log(`${id} updated by an MQTT message`)
     },
     addNode: (state, action) => {
       state.nodes[action.payload.id] = action.payload;
