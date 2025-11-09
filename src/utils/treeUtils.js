@@ -1,4 +1,4 @@
-function createTreeFromNodes(nodes) {
+const createTreeFromNodes = (nodes) => {
     const tree = [];
 
     const interimStorage = {};
@@ -41,4 +41,4 @@ function createTreeFromNodes(nodes) {
     return tree;
 }
 
-export {createTreeFromNodes};
+export { createTreeFromNodes };

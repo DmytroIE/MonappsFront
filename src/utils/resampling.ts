@@ -38,11 +38,7 @@ const getResamplingTime = (startTs: number, endTs: number, initialTimeResample: 
     return Math.max(initialTimeResample, updatedResTime);
 }
 
-const resampleDfReadings = (readingMap: ReadingMap, timeResample: number, aggType: number) => {
-    if (Object.keys(readingMap).length === 0) {
-        return readingMap;
-    }
-    const sortedValues = Object.values(readingMap).sort((a, b) => a.t - b.t);
+const resampleDfReadings = (sortedValues: Reading[], timeResample: number, aggType: number) => {
     const resampleMap: { [key: number | string]: Array<Reading> } = {};
     for (const val of sortedValues) {
         const ts = val.t;
@@ -112,9 +108,9 @@ const groupDsReadings = (readingMap: ReadingMap, maxClusterTimeSpan: number, tim
         // create a group that will be displayed as a rectangle or circle in the chart
         groupedReadingMap[currCluster[0].t] = {
             t: currCluster[0].t,
-            v: Math.min(...currCluster.map(x => x.v)), // v: currCluster[0].v,
+            v: Math.min(...currCluster.map(x => x.v)),
             t2: currCluster[currCluster.length - 1].t,
-            v2: Math.max(...currCluster.map(x => x.v)) // v2: currCluster[currCluster.length - 1].v
+            v2: Math.max(...currCluster.map(x => x.v))
         };
     }
     return { singleReadingMap, groupedReadingMap };

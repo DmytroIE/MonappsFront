@@ -10,7 +10,7 @@ import TabPanel from '../TabPanel/TabPanel';
 import { a11yProps } from '../TabPanel/TabPanel';
 
 
-export default function DeviceArea({ id }: { id: string }) {
+const DeviceArea = ({ id }: { id: string }) => {
   const [value, setValue] = React.useState(0);
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -35,3 +35,5 @@ export default function DeviceArea({ id }: { id: string }) {
     </Box>
   );
 }
+
+export default DeviceArea;

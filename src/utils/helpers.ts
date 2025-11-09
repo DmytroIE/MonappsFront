@@ -1,13 +1,13 @@
 import { nodeWithReadingsId, dsReadingtypes, dfReadingtypes, ReadingsRequestItem, Reading, ReadingsApiResponse, ReadingMap, IndReadingInfo } from '../types';
 
 
-const findMinMaxTsAmongManyReadingInfos = (readingInfos: Array<IndReadingInfo>) => {
-    if (readingInfos.length === 0) {
+const getMinMaxTsFromInfoBatch = (infos: IndReadingInfo[]): { minTs: number, maxTs: number } => {
+    if (infos.length === 0) {
         return { minTs: 0, maxTs: 0 };
     }
     let minTs = Infinity;
     let maxTs = 0;
-    for (const readingInfo of readingInfos) {
+    for (const readingInfo of infos) {
         if (readingInfo.firstReadingTs !== null) {
             minTs = Math.min(minTs, readingInfo.firstReadingTs);
         }
@@ -18,17 +18,33 @@ const findMinMaxTsAmongManyReadingInfos = (readingInfos: Array<IndReadingInfo>) 
     return { minTs, maxTs };
 }
 
-const getMinMaxTsAmongManyReadingInfos = (infos: IndReadingInfo[]) => {
-    let minTs = Infinity;
-    let maxTs = 0;
+const getStartEndTsFromInfoBatch = (infos: IndReadingInfo[]): { startTs: number, endTs: number } => {
+    let startTs = Infinity;
+    let endTs = 0;
     for (const info of infos) {
         const timestamps = Object.keys(info.readings).map(x => +x);
         const minTsInReadings = Math.min(...timestamps);
-        minTs = Math.min(minTs, minTsInReadings);
+        startTs = Math.min(startTs, minTsInReadings);
         const maxTsInReadings = Math.max(...timestamps);
-        maxTs = Math.max(maxTs, maxTsInReadings);
+        endTs = Math.max(endTs, maxTsInReadings);
     }
-    return { minTs, maxTs };
+    return { startTs, endTs };
 }
 
-export { findMinMaxTsAmongManyReadingInfos, getMinMaxTsAmongManyReadingInfos };
+const getReadingsFromDtRange = (readingInfos: IndReadingInfo[], dtRange: number[]): IndReadingInfo[] => {
+    const [startTs, endTs] = dtRange;
+    const newInfos = [];
+    for (const info of readingInfos) {
+      const newInfo = { ...info };
+      newInfo.readings = {};
+      for (const [tsStr, reading] of Object.entries(info.readings)) {
+        if (reading.t >= startTs && reading.t <= endTs) {
+          newInfo.readings[tsStr] = reading;
+        }
+      }
+      newInfos.push(newInfo);
+    }
+    return newInfos;
+  }
+
+export { getMinMaxTsFromInfoBatch, getStartEndTsFromInfoBatch, getReadingsFromDtRange };

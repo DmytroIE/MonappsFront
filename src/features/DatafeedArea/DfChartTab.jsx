@@ -17,8 +17,10 @@ import {
 import { Line } from 'react-chartjs-2';
 
 import 'chartjs-adapter-date-fns';
+import annotationPlugin from 'chartjs-plugin-annotation';
 
-import { createDfChartData } from "../../utils/chartUtils";
+import { createDfChartData, getTimeUnitAndDivider } from "../../utils/chartUtils";
+import { dtFormatter } from "../../utils/timeUtils";
 
 ChartJS.register(
     CategoryScale,
@@ -29,13 +31,13 @@ ChartJS.register(
     Tooltip,
     Filler,
     Legend,
-    TimeScale
+    TimeScale,
+    annotationPlugin
 );
 
 
-function DfChartTab({ id }) {
+const DfChartTab = ({ id, timeResample, readingInfo }) => {
 
-    const selNodeReadings = useSelector((state) => state.tree.selNodeReadings);
     const nodeData = useSelector((state) => state.tree.nodes[id]);
     const readingsLoadingState = useSelector((state) => state.tree.selNodeReadingsLoadingState);
 
@@ -44,71 +46,98 @@ function DfChartTab({ id }) {
     } else {
         const colorObj = { r: 255, g: 99, b: 132 };
 
-        const readingMaps = {};
-        for (const indInfo of selNodeReadings) {
-            if (indInfo.id !== id) {
-                continue;
-            }
-            readingMaps['dfReadings'] = indInfo.readings;
-        }
-        const chartData = createDfChartData(readingMaps, nodeData, colorObj);
+        const chartData = createDfChartData(readingInfo, timeResample, nodeData, colorObj);
+
         if (chartData.datasets.length === 0) {
-            return <Typography variant='h3' sx={{ textAlign: "center" }}>No data or data is corrupted</Typography>;
+            return (
+                <Typography variant='h3' sx={{ textAlign: "center", height: "400px" }}>
+                    No data
+                </Typography>);
         }
 
-        const numOfMinutes = Math.floor((chartData.endTs - chartData.startTs) / 60000);
-        const canvaswidth = numOfMinutes > 50 ? numOfMinutes * 20 : 1000;
+        const data = { datasets: chartData.datasets };
+        const annotations = chartData.annotations;
+        const { startTs, endTs } = chartData; // These startTs and endTs are different from those adjusted by the dtSlider
+
+        if (startTs > endTs) {
+            return (
+                <Typography variant='h3' sx={{ textAlign: "center", height: "400px" }}>
+                    No data in the selected range
+                </Typography>
+            );
+        }
+
+        let deltaTime = endTs - startTs;
+
+        const { timeUnit, timeDivider } = getTimeUnitAndDivider(deltaTime, startTs, endTs);
+
+        if (deltaTime === 0) { // a single reading to show
+            deltaTime = 250000; // just to get some space around the point, it will be multiplied by 0.01 later
+        }
 
         return (
-            <Box sx={{ overflow: "auto", width: '100%' }}>
-                <Box sx={{ height: 500, width: canvaswidth }}>
-                    <Line data={chartData} options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'right',
-                            },
-                            title: {
-                                display: false,
-                                text: 'Readings',
+            <Box sx={{ height: 400 }}>
+                <Line data={data} options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                pointRadius: 5
                             },
                         },
-                        scales: {
-                            x: {
-                                type: "time",
-                                //parsing: false,
-                                //source: 'labels',
-                                time: {
-                                    unit: 'minute', // the timestamps with the resolution of 'time.unit' will be passed into 'ticks.callback'
-                                },
-                                ticks: {
-                                    callback: function (val) {
-                                        // 'val' will be a multiple of 'time.unit'
-                                        if (val % 120000 === 0) {
-                                            const timeStr = (new Date(val)).toLocaleTimeString();
-                                            if (val % 600000 === 0) {
-                                                return timeStr;
-                                            }
-                                            return (timeStr.split(":").slice(1)).join(":");
-                                        }
-                                        return null;
-                                    }
-                                }
+                        title: {
+                            display: false,
+                            text: 'Readings',
+                        },
+                        annotation: {
+                            annotations,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: "time",
+                            time: {
+                                unit: timeUnit,
                             },
-                            y: {
-
-                                ticks: {
-                                    callback: function (val) { if (val % 1 === 0) { return val; } }
+                            min: startTs - timeResample,    // Add explicit bounds
+                            max: endTs + timeResample,
+                            ticks: {
+                                callback: (val) => {
+                                    const date = new Date(val);
+                                    const dateTimeStr = dtFormatter.format(date);
+                                    if (val % timeDivider === 0) {
+                                        if (val % 3600000 === 0) {
+                                            return dateTimeStr.split(" ")[1];
+                                        }
+                                        else if (val % 86400000 === 0) {
+                                            return dateTimeStr.split(" ")[0];
+                                        }
+                                        else {
+                                            return dateTimeStr.split(":").slice(1).join(":");
+                                        }
+                                    }
+                                    return null;
                                 }
                             }
                         },
-                    }}></Line>
-                </Box>
+                        y: {
+                            ticks: {
+                                callback: (val) => {
+                                    if (val % 1 === 0) {
+                                        return val;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                }}></Line>
             </Box>
         );
-
     }
 }
 

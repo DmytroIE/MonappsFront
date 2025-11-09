@@ -23,8 +23,6 @@ import { createDsChartData, getTimeUnitAndDivider } from "../../utils/chartUtils
 import { dtFormatter } from "../../utils/timeUtils";
 
 
-ChartJS.register(annotationPlugin);
-
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -39,7 +37,7 @@ ChartJS.register(
 );
 
 
-function DsChartTab({ id, quantTime, readingInfos, setDtRange }) {
+const DsChartTab = ({ id, quantTime, readingInfos, setDtRange }) => {
     const nodeData = useSelector((state) => state.tree.nodes[id]);
     const readingsLoadingState = useSelector((state) => state.tree.selNodeReadingsLoadingState);
 
@@ -50,7 +48,7 @@ function DsChartTab({ id, quantTime, readingInfos, setDtRange }) {
         const chartData = createDsChartData(readingInfos, nodeData, quantTime * 5, quantTime, (newRange) => setDtRange(newRange));
 
         if (chartData.datasets.length === 0) {
-            return <Typography variant='h3' sx={{ textAlign: "center", height: "400px", border: "1px solid red" }}>No data</Typography>;
+            return <Typography variant='h3' sx={{ textAlign: "center", height: "400px" }}>No data</Typography>;
         }
 
         const data = { datasets: chartData.datasets };
@@ -101,7 +99,7 @@ function DsChartTab({ id, quantTime, readingInfos, setDtRange }) {
                             min: startTs - Math.round(deltaTime * 0.01),    // Add explicit bounds
                             max: endTs + Math.round(deltaTime * 0.01),      // Add explicit bounds
                             ticks: {
-                                callback: function (val) {
+                                callback: (val) => {
                                     const date = new Date(val);
                                     const dateTimeStr = dtFormatter.format(date);
                                     if (val % timeDivider === 0) {
@@ -114,7 +112,6 @@ function DsChartTab({ id, quantTime, readingInfos, setDtRange }) {
                                         else {
                                             return dateTimeStr.split(":").slice(1).join(":");
                                         }
-
                                     }
                                     return null;
                                 }
@@ -122,7 +119,11 @@ function DsChartTab({ id, quantTime, readingInfos, setDtRange }) {
                         },
                         y: {
                             ticks: {
-                                callback: function (val) { if (val % 1 === 0) { return val; } }
+                                callback: (val) => {
+                                    if (val % 1 === 0) {
+                                        return val;
+                                    }
+                                }
                             }
                         }
                     },

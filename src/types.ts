@@ -31,7 +31,7 @@ enum VarTypes {
     ORDINAL = 4
 }
 
-enum AggrTypes {
+enum AggTypes {
     AVG = 0,
     SUM = 1,
     LAST = 2
@@ -44,6 +44,8 @@ type ChartData = {
     endTs: number
 }
 
+type Color = { r: number, g: number, b: number, alpha?: number };
+
 export type {
     nodeWithReadingsId,
     dsReadingtypes,
@@ -53,6 +55,7 @@ export type {
     ReadingsApiResponse,
     ReadingMap,
     IndReadingInfo,
-    ChartData
+    ChartData,
+    Color
 };
-export { resamplingTimes, VarTypes, AggrTypes, MIN_RESAMPLING_TIME, MAX_NUM_POINTS_ON_CHART };
+export { resamplingTimes, VarTypes, AggTypes, MIN_RESAMPLING_TIME, MAX_NUM_POINTS_ON_CHART };

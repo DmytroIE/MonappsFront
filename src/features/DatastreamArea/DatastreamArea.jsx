@@ -6,14 +6,14 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import { useSelector, useDispatch } from "react-redux";
 import { createSelector } from '@reduxjs/toolkit';
-
-import DsChartTab from './DsChartTab';
 import InstancePropsPage from '../InstancePropsPage/InstancePropsPage';
 import TabPanel from '../TabPanel/TabPanel';
-import DatetimeRangeSlider from '../DateRangeSlider/DatetimeRangeSlider';
 import { a11yProps } from '../TabPanel/TabPanel';
+
+import DsChartTab from './DsChartTab';
+import DatetimeRangeSlider from '../DateRangeSlider/DatetimeRangeSlider';
 import { fetchNodeReadings } from "../NodeTree/treeSlice";
-import { findMinMaxTsAmongManyReadingInfos } from '../../utils/helpers';
+import { getMinMaxTsFromInfoBatch, getReadingsFromDtRange } from '../../utils/helpers';
 import { getResamplingTime } from '../../utils/resampling';
 import { MIN_RESAMPLING_TIME, MAX_NUM_POINTS_ON_CHART } from '../../types';
 
@@ -31,32 +31,15 @@ const getAllDsReadings = (id, dispatch) => {
 
 const getMinMaxTs = createSelector(
   [(state) => state.tree.selNodeReadings],
-  (readingInfos) => findMinMaxTsAmongManyReadingInfos(readingInfos)
+  (readingInfos) => getMinMaxTsFromInfoBatch(readingInfos)
 );
 
 const getReadingsFromRange = createSelector(
-  [(state) => state.tree.selNodeReadings, (state, range) => range],
-  (readingInfos, range) => {
-    const [startTs, endTs] = range;
-    const newInfos = [];
-    for (const info of readingInfos) {
-      const newInfo = { ...info };
-      newInfo.readings = {};
-      for (const [tsStr, reading] of Object.entries(info.readings)) {
-        if (reading.t >= startTs && reading.t <= endTs) {
-          newInfo.readings[tsStr] = reading;
-        }
-      }
-      newInfos.push(newInfo);
-    }
-    return newInfos;
-  }
+  [(state) => state.tree.selNodeReadings, (state, dtRange) => dtRange],
+  (readingInfos, dtRange) => getReadingsFromDtRange(readingInfos, dtRange)
 );
 
-// -----------------------------------------------------------------------
-// hide state
-
-export default function DatastreamArea({ id }) {
+const DatastreamArea = ({ id }) => {
 
   const [tabIdx, setTabIdx] = useState(0);
   const [committedDtRange, setCommittedDtRange] = useState([0, 0]);
@@ -66,7 +49,7 @@ export default function DatastreamArea({ id }) {
     [committedDtRange]
   );
 
-  const handleChange = (event, newTabIdx) => {
+  const handleTabChange = (event, newTabIdx) => {
     setTabIdx(newTabIdx);
   };
 
@@ -83,7 +66,7 @@ export default function DatastreamArea({ id }) {
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabIdx} onChange={handleChange} aria-label="basic tabs example">
+        <Tabs value={tabIdx} onChange={handleTabChange} aria-label="basic tabs example">
           <Tab label="Properties" {...a11yProps(0)} />
           <Tab label="Graphs" {...a11yProps(1)} />
           <Tab label="Alarm log" {...a11yProps(2)} />
@@ -93,15 +76,28 @@ export default function DatastreamArea({ id }) {
         <InstancePropsPage id={id} />
       </TabPanel>
       <TabPanel value={tabIdx} index={1}>
-        <DsChartTab id={id} quantTime={commitedQuantTime} readingInfos={readingInfos} setDtRange={(dtRange) => { setCommittedDtRange(dtRange); }} />
+        <DsChartTab
+          id={id}
+          quantTime={commitedQuantTime}
+          readingInfos={readingInfos}
+          setDtRange={(dtRange) => { setCommittedDtRange(dtRange); }} />
       </TabPanel>
       <TabPanel value={tabIdx} index={2}>
         <Typography variant='h3' sx={{ textAlign: "center" }}>Alarm log</Typography>
         <Container>Later</Container>
       </TabPanel>
       <Box sx={{ display: "flex", justifyContent: "space-evenly" }}>
-        <DatetimeRangeSlider commitedDtRange={committedDtRange} handleChangeCommitted={setCommittedDtRange} minTs={minTs} maxTs={maxTs} addStyles={{ width: '70%', p: 1 }} />
+        <DatetimeRangeSlider
+          commitedDtRange={committedDtRange}
+          handleChangeCommitted={setCommittedDtRange}
+          minTs={minTs}
+          maxTs={maxTs}
+          step={1000}
+          addStyles={{ width: '70%', p: 1 }} />
+        <Typography variant='h6'>{commitedQuantTime / 1000} s</Typography>
       </Box>
     </Box>
   );
 }
+
+export default DatastreamArea;

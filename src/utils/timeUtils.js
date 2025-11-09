@@ -1,4 +1,4 @@
-function ceilTimestamp(ts, interval){
+const ceilTimestamp = (ts, interval) => {
     let k = Math.floor(ts / interval);
     const modulo = ts % interval;
     if (modulo > 0) {
@@ -7,17 +7,17 @@ function ceilTimestamp(ts, interval){
     return k * interval
 }
 
-function floorTimestamp(ts, interval){
+const floorTimestamp = (ts, interval) => {
     const k = Math.floor(ts / interval);
     return k * interval;
 }
 
 
-function createGrid(startRts, endRts, tResample) {
+const createGrid = (startRts, endRts, tResample) => {
     if (endRts < startRts)
         return;
 
-    if ((endRts - startRts) % tResample !== 0){
+    if ((endRts - startRts) % tResample !== 0) {
         return;
     }
     const grid = [startRts];
@@ -31,4 +31,4 @@ function createGrid(startRts, endRts, tResample) {
 
 const dtFormatter = new Intl.DateTimeFormat("en-GB", { hour12: false, dateStyle: "short", timeStyle: "medium" });
 
-export {ceilTimestamp, floorTimestamp, createGrid, dtFormatter};
+export { ceilTimestamp, floorTimestamp, createGrid, dtFormatter };

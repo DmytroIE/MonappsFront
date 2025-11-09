@@ -12,7 +12,7 @@ import extractSize from "./uroUtils/extractSize";
 
 
 
-function useResizeObserver(opts = {}) {
+const useResizeObserver = (opts = {}) => {
   // Saving the callback as a ref. With this, I don't need to put onResize in the
   // effect dep array, and just passing in an anonymous function without memoising
   // will not reinstantiate the hook's ResizeObserver.

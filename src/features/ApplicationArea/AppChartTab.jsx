@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import CircularProgress from "@mui/material/CircularProgress";
+import Typography from '@mui/material/Typography';
 import { useSelector } from "react-redux";
-import { createSelector } from '@reduxjs/toolkit';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -17,9 +17,10 @@ import {
 import { Line } from 'react-chartjs-2';
 
 import 'chartjs-adapter-date-fns';
+import annotationPlugin from 'chartjs-plugin-annotation';
 
-import { createDfChartData } from "../../utils/chartUtils";
-
+import { createDfChartData, getTimeUnitAndDivider } from "../../utils/chartUtils";
+import { dtFormatter } from "../../utils/timeUtils";
 
 ChartJS.register(
     CategoryScale,
@@ -30,29 +31,37 @@ ChartJS.register(
     Tooltip,
     Filler,
     Legend,
-    TimeScale
+    TimeScale,
+    annotationPlugin
 );
 
 const CHART_COLORS = {
     red: 'rgb(255, 0, 0)',
-    orange: 'rgb(255, 128, 0)',
-    yellow: 'rgb(255, 255, 0)',
     green: 'rgb(0, 255, 0)',
-    blue: 'rgb(0, 0, 255)',
-    purple: 'rgb(128, 0, 255)',
+    pink: 'rgb(255, 0, 255)',
     cyan: 'rgb(0, 255, 255)',
-    pink: 'rgb(255, 0, 255)'
+    orange: 'rgb(255, 128, 0)',
+    blue: 'rgb(0, 0, 255)',
+    yellow: 'rgb(255, 255, 0)',
+    purple: 'rgb(128, 0, 255)',
 };
 
 const RGB_COLOR_OBJECTS = [
     { r: 255, g: 0, b: 0 },
-    { r: 0, g: 255, b: 255 },
     { r: 0, g: 255, b: 0 },
     { r: 255, g: 0, b: 255 },
-    { r: 0, g: 0, b: 255 },
+    { r: 0, g: 255, b: 255 },
     { r: 255, g: 128, b: 0 },
+    { r: 0, g: 0, b: 255 },
     { r: 128, g: 0, b: 255 },
 ];
+
+const statusValueMap = {
+    0: 'UN',
+    1: 'OK',
+    2: 'WA',
+    3: 'ER'
+}
 
 function* colorCycler() {
     while (true) {
@@ -62,118 +71,138 @@ function* colorCycler() {
     }
 }
 
-const colorObjGenerator = colorCycler();
 
-const getDatafeeds = createSelector(
-    [(state) => state.tree.nodes, (state, itemId) => itemId],
-    (nodes, id) => Object.values(nodes).filter((item) => item.parentId === id)
-);
+const AppChartTab =({ id, timeResample, dfInfos, readingInfos }) => {
 
-
-function AppChartTab({ id }) {
-
-    const selNodeReadings = useSelector((state) => state.tree.selNodeReadings);
-    const datafeeds = useSelector(state => getDatafeeds(state, id));
     const readingsLoadingState = useSelector((state) => state.tree.selNodeReadingsLoadingState);
 
     if (readingsLoadingState === 'pending') {
         return <CircularProgress />;
     } else {
-        let maxTs = 0;
-        let minTs = Infinity;
+        let endTs = 0;
+        let startTs = Infinity;
         const datasets = [];
-        for (const datafeed of datafeeds) {
+        let annotations = {};
+        const colorObjGenerator = colorCycler();
+        for (const dfInfo of dfInfos) {
             const colorObj = colorObjGenerator.next().value;
 
-            const readingMaps = {};
-            for (const indInfo of selNodeReadings) {
-                if (indInfo.id !== datafeed.id || indInfo.readingType !== 'dfReadings') {
-                    continue;
-                }
-                readingMaps['dfReadings'] = indInfo.readings;
-            }
+            const readingInfo = readingInfos.find((rInfo) => rInfo.id === dfInfo.id);
 
-            const chartData = createDfChartData(readingMaps, datafeed, colorObj);
+            const dfChartData = createDfChartData(readingInfo, timeResample, dfInfo, colorObj);
 
-            if (datafeed.name === 'Status' || datafeed.name === 'Current state') {
-                for (const dataset of chartData.datasets) {
+            if (dfInfo.name === 'Status' || dfInfo.name === 'Current state') {
+                for (const dataset of dfChartData.datasets) {
                     dataset.yAxisID = 'y2';
                 }
             }
-            datasets.push(...chartData.datasets);
-            maxTs = Math.max(maxTs, chartData.endTs);
-            minTs = Math.min(minTs, chartData.startTs);
+            datasets.push(...dfChartData.datasets);
+            annotations = { ...annotations, ...dfChartData.annotations };
+            endTs = Math.max(endTs, dfChartData.endTs);
+            startTs = Math.min(startTs, dfChartData.startTs);
         }
 
-        const numOfMinutes = Math.floor((maxTs - minTs) / 60000);
-        const canvaswidth = numOfMinutes > 50 ? numOfMinutes * 20 : 2000;
+        if (startTs > endTs) {
+            return (
+                <Typography variant='h3' sx={{ textAlign: "center", height: "400px" }}>
+                    No data in the selected range
+                </Typography>
+            );
+        }
+
+        let deltaTime = endTs - startTs;
+
+        const { timeUnit, timeDivider } = getTimeUnitAndDivider(deltaTime, startTs, endTs);
+
+        if (deltaTime === 0) { // a single reading to show
+            deltaTime = 250000; // just to get some space around the point, it will be multiplied by 0.01 later
+        }
 
         return (
-            <Box sx={{ overflowX: "auto", }}>
-                <Box sx={{ height: 500, width: canvaswidth }}>
-                    <Line data={{ datasets }} options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'right',
-                            },
-                            title: {
-                                display: false,
-                                text: 'Readings',
+            <Box sx={{ height: 400 }}>
+                <Line data={{ datasets }} options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                pointRadius: 5
                             },
                         },
-                        scales: {
-                            x: {
-                                type: "time",
-                                //parsing: false,
-                                //source: 'labels',
-                                time: {
-                                    unit: 'minute', // the timestamps with the resolution of 'time.unit' will be passed into 'ticks.callback'
-                                },
-                                ticks: {
-                                    callback: function (val) {
-                                        // 'val' will be a multiple of 'time.unit'
-                                        if (val % 120000 === 0) {
-                                            const timeStr = (new Date(val)).toLocaleTimeString();
-                                            if (val % 600000 === 0) {
-                                                return timeStr;
-                                            }
-                                            return (timeStr.split(":").slice(1)).join(":");
+                        title: {
+                            display: false,
+                            text: 'Readings',
+                        },
+                        annotation: {
+                            annotations,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: "time",
+                            time: {
+                                unit: timeUnit,
+                            },
+                            min: startTs - timeResample,    // Add explicit bounds
+                            max: endTs + timeResample,
+                            ticks: {
+                                callback: (val) => {
+                                    const date = new Date(val);
+                                    const dateTimeStr = dtFormatter.format(date);
+                                    if (val % timeDivider === 0) {
+                                        if (val % 3600000 === 0) {
+                                            return dateTimeStr.split(" ")[1];
                                         }
-                                        return null;
+                                        else if (val % 86400000 === 0) {
+                                            return dateTimeStr.split(" ")[0];
+                                        }
+                                        else {
+                                            return dateTimeStr.split(":").slice(1).join(":");
+                                        }
                                     }
-                                }
-                            },
-                            y: {
-                                type: 'linear',
-                                position: 'left',
-                                stack: 'demo',
-                                stackWeight: 3,
-                                border: {
-                                    color: CHART_COLORS.red
-                                },
-                                ticks: {
-                                    callback: function (val) { if (val % 1 === 0) { return val; } }
-                                }
-                            },
-                            y2: {
-                                type: 'linear',
-                                offset: true,
-                                position: 'left',
-                                stack: 'demo',
-                                stackWeight: 1,
-                                border: {
-                                    color: CHART_COLORS.blue
-                                },
-                                ticks: {
-                                    callback: function (val) { if (val % 1 === 0) { return val; } }
+                                    return null;
                                 }
                             }
                         },
-                    }}></Line>
-                </Box>
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            stack: 'demo',
+                            stackWeight: 3,
+                            border: {
+                                color: CHART_COLORS.red
+                            },
+                            ticks: {
+                                callback: (val) => {
+                                    if (val % 1 === 0) {
+                                        return val;
+                                    }
+                                }
+                            }
+                        },
+                        y2: {
+                            type: 'linear',
+                            offset: true,
+                            position: 'left',
+                            stack: 'demo',
+                            stackWeight: 1,
+                            border: {
+                                color: CHART_COLORS.blue
+                            },
+                            ticks: {
+                                callback: (val) => {
+                                    if (val % 1 === 0) {
+                                        return statusValueMap[val];
+                                    }
+                                }
+                            }
+                        }
+                    },
+                }}></Line>
             </Box>
         );
 

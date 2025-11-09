@@ -4,29 +4,28 @@ import Typography from '@mui/material/Typography';
 import Slider from '@mui/material/Slider';
 
 import { dtFormatter } from "../../utils/timeUtils";
-import { getResamplingTime } from '../../utils/resampling';
-import { MIN_RESAMPLING_TIME, MAX_NUM_POINTS_ON_CHART } from '../../types';
 
 type DtRangeProps = {
   commitedDtRange: number[],
   handleChangeCommitted: (x: number[]) => void,
   minTs: number,
   maxTs: number,
+  step: number
   addStyles?: CSSProperties
 };
 
-export default function DtRangeSlider({ commitedDtRange, handleChangeCommitted, minTs, maxTs, addStyles }: DtRangeProps) {
-  const [step, setStep] = useState<number>(1000);
+const DtRangeSlider = (
+  { commitedDtRange,
+    handleChangeCommitted,
+    minTs,
+    maxTs,
+    step,
+    addStyles }: DtRangeProps) => {
   const [dtRange, setDtRange] = useState([0, 0]);
 
   useEffect(() => {
     setDtRange(commitedDtRange);
   }, [commitedDtRange]);
-
-  useEffect(() => {
-    const newStep = getResamplingTime(dtRange[0], dtRange[1], MIN_RESAMPLING_TIME, MAX_NUM_POINTS_ON_CHART);
-    setStep(newStep);
-  }, [dtRange]);
 
   const onChange = (event: Event | any, newValue: number | number[]) => {
     if (Array.isArray(newValue)) {
@@ -67,9 +66,10 @@ export default function DtRangeSlider({ commitedDtRange, handleChangeCommitted, 
       />
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Typography variant="h6">{dtFormatter.format(new Date(dtRange[0]))}</Typography>
-        <Typography variant="h6">{`Quant time:${step / 1000}s`}</Typography>
         <Typography variant="h6">{dtFormatter.format(new Date(dtRange[1]))}</Typography>
       </Box>
     </Box>
   );
 }
+
+export default DtRangeSlider;
