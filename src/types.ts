@@ -3,10 +3,8 @@ type dsReadingtypes = 'dsReadings' | 'unusDsReadings' | 'invDsReadings' | 'norcD
 type dfReadingtypes = 'dfReadings';
 type ReadingsRequestItem = { id: nodeWithReadingsId, readingType: dsReadingtypes | dfReadingtypes, gt?: number, gte?: number, lte?: number, qty?: number, resamplingTime?: number };
 type Reading = { t: number, v: number, r?: boolean, t2?: number, v2?: number };
-type NdmReading = { t: number, v?: null }
 type ReadingsApiResponse = { id: nodeWithReadingsId, readingType: dsReadingtypes | dfReadingtypes, firstReadingTs: number | null, lastReadingTs: number | null, batch: Reading[] }
 type ReadingMap = { [ts: number | string]: Reading }
-type NdmReadingMap = { [ts: number | string]: NdmReading }
 type IndReadingInfo = { id: nodeWithReadingsId, readingType: dsReadingtypes | dfReadingtypes, firstReadingTs: number | null, lastReadingTs: number | null, lastFetchError: string | null, readings: ReadingMap }
 
 const resamplingTimes = [
@@ -23,6 +21,9 @@ const resamplingTimes = [
     604800000
 ];
 
+const MIN_RESAMPLING_TIME = 1000;
+const MAX_NUM_POINTS_ON_CHART = 100;
+
 enum VarTypes {
     CONTINUOUS = 0,
     DISCRETE = 1,
@@ -36,15 +37,22 @@ enum AggrTypes {
     LAST = 2
 }
 
+type ChartData = {
+    datasets: any[],
+    annotations: { [key: string]: any },
+    startTs: number,
+    endTs: number
+}
+
 export type {
     nodeWithReadingsId,
     dsReadingtypes,
     dfReadingtypes,
     ReadingsRequestItem,
-    Reading, NdmReading,
+    Reading,
     ReadingsApiResponse,
     ReadingMap,
-    NdmReadingMap,
-    IndReadingInfo
+    IndReadingInfo,
+    ChartData
 };
-export { resamplingTimes, VarTypes, AggrTypes };
+export { resamplingTimes, VarTypes, AggrTypes, MIN_RESAMPLING_TIME, MAX_NUM_POINTS_ON_CHART };

@@ -1,6 +1,7 @@
-import { VarTypes, ReadingMap, NdmReadingMap } from "../types";
+import { VarTypes, ReadingMap, IndReadingInfo, ChartData } from "../types";
 import { groupDsReadings } from "./resampling";
 import { dtFormatter } from "../utils/timeUtils";
+import { getMinMaxTsAmongManyReadingInfos } from "./helpers";
 
 const createData = ([t, obj]: [t: string, obj: { v: number } | null]) => [+t, obj ? obj.v : obj]
 
@@ -17,16 +18,11 @@ type ReadingMaps = {
     invDsReadings?: ReadingMap,
     unusDsReadings?: ReadingMap,
     norcDsReadings?: ReadingMap,
-    ndMarkers?: NdmReadingMap,
-    unusNdMarkers?: NdmReadingMap
+    ndMarkers?: ReadingMap,
+    unusNdMarkers?: ReadingMap
 }
 
-type ChartData = {
-    datasets: any[],
-    annotations: { [key: string]: any },
-    startTs: number,
-    endTs: number
-}
+
 
 
 function createDfChartData(
@@ -116,6 +112,8 @@ const prepareDsDatasets = (
         fill: false,
         showLine: false,
         spanGaps: false,
+        borderColor: color,
+        backgroundColor: lightColor,
         pointBorderColor: color,
         pointBackgroundColor: lightColor,
         label,
@@ -124,8 +122,6 @@ const prepareDsDatasets = (
         pointRadius
     };
     chartData.datasets.push(dsrDataset);
-
-    [chartData.startTs, chartData.endTs] = getUpdatedEdgeTimestamps(Object.keys(readingMap), chartData);
 
     const initGroupObj = {
         type: 'box',
@@ -169,7 +165,7 @@ const prepareDsDatasets = (
 
 const prepareNdmAnnotations = (
     chartData: ChartData,
-    ndmReadingMap: NdmReadingMap,
+    ndmReadingMap: ReadingMap,
     label: string,
     width: number,
     r: number,
@@ -209,7 +205,7 @@ const prepareNdmAnnotations = (
 
 
 function createDsChartData(
-    readingMaps: ReadingMaps,
+    readingInfos: IndReadingInfo[],
     dsInfo: { name: string },
     maxClusterTimeSpan: number,
     timeGrouping: number,
@@ -223,27 +219,34 @@ function createDsChartData(
         endTs: 0
     }
 
+    const { minTs, maxTs } = getMinMaxTsAmongManyReadingInfos(readingInfos);
+    chartData.startTs = minTs;
+    chartData.endTs = maxTs;
 
-    if (readingMaps.dsReadings !== undefined && Object.keys(readingMaps.dsReadings).length > 0) {
-        prepareDsDatasets(chartData, readingMaps.dsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-dsr`, 0, 255, 0, 5, "crossRot", setDtRange);
+    const dsReadingInfo = readingInfos.find(x => x.readingType === 'dsReadings');
+    if (dsReadingInfo && Object.keys(dsReadingInfo.readings).length > 0) {
+        prepareDsDatasets(chartData, dsReadingInfo.readings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-dsr`, 0, 255, 0, 5, "crossRot", setDtRange);
     }
-    if (readingMaps.unusDsReadings !== undefined && Object.keys(readingMaps.unusDsReadings).length > 0) {
-        prepareDsDatasets(chartData, readingMaps.unusDsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-unusDsr`, 127, 127, 127, 6, "rectRot", setDtRange);
+    const unusDsReadingInfo = readingInfos.find(x => x.readingType === 'unusDsReadings');
+    if (unusDsReadingInfo && Object.keys(unusDsReadingInfo.readings).length > 0) {
+        prepareDsDatasets(chartData, unusDsReadingInfo.readings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-unusDsr`, 127, 127, 127, 6, "rectRot", setDtRange);
     }
+    const invDsReadingInfo = readingInfos.find(x => x.readingType === 'invDsReadings');
+    if (invDsReadingInfo && Object.keys(invDsReadingInfo.readings).length > 0) {
+        prepareDsDatasets(chartData, invDsReadingInfo.readings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-invDsr`, 255, 0, 0, 8, "cross", setDtRange);
+    }
+    const norcDsReadingInfo = readingInfos.find(x => x.readingType === 'norcDsReadings');
+    if (norcDsReadingInfo && Object.keys(norcDsReadingInfo.readings).length > 0) {
+        prepareDsDatasets(chartData, norcDsReadingInfo.readings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-norcDsr`, 0, 0, 255, 4, "rectRounded", setDtRange);
+    }
+    const ndmReadingInfo = readingInfos.find(x => x.readingType === 'ndMarkers');
+    if (ndmReadingInfo && Object.keys(ndmReadingInfo.readings).length > 0) {
+        prepareNdmAnnotations(chartData, ndmReadingInfo.readings, `${dsInfo.name}-ndm`, 3, 0, 0, 0);
 
-    if (readingMaps.invDsReadings !== undefined && Object.keys(readingMaps.invDsReadings).length > 0) {
-        prepareDsDatasets(chartData, readingMaps.invDsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-invDsr`, 255, 0, 0, 8, "cross", setDtRange);
     }
-    if (readingMaps.norcDsReadings !== undefined && Object.keys(readingMaps.norcDsReadings).length > 0) {
-        prepareDsDatasets(chartData, readingMaps.norcDsReadings, maxClusterTimeSpan, timeGrouping, `${dsInfo.name}-norcDsr`, 0, 0, 255, 4, "rectRounded", setDtRange);
-    }
-
-    if (readingMaps.ndMarkers !== undefined && Object.keys(readingMaps.ndMarkers).length > 0) {
-        prepareNdmAnnotations(chartData, readingMaps.ndMarkers, `${dsInfo.name}-ndm`, 3, 0, 0, 0);
-
-    }
-    if (readingMaps.unusNdMarkers !== undefined && Object.keys(readingMaps.unusNdMarkers).length > 0) {
-        prepareNdmAnnotations(chartData, readingMaps.unusNdMarkers, `${dsInfo.name}-unusNdm`, 1, 127, 127, 127);
+    const unusNdmReadingInfo = readingInfos.find(x => x.readingType === 'unusNdMarkers');
+    if (unusNdmReadingInfo && Object.keys(unusNdmReadingInfo.readings).length > 0) {
+        prepareNdmAnnotations(chartData, unusNdmReadingInfo.readings, `${dsInfo.name}-unusNdm`, 1, 127, 127, 127);
     }
     return chartData;
 }

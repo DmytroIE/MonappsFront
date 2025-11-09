@@ -15,6 +15,7 @@ import { a11yProps } from '../TabPanel/TabPanel';
 import { fetchNodeReadings } from "../NodeTree/treeSlice";
 import { findMinMaxTsAmongManyReadingInfos } from '../../utils/helpers';
 import { getResamplingTime } from '../../utils/resampling';
+import { MIN_RESAMPLING_TIME, MAX_NUM_POINTS_ON_CHART } from '../../types';
 
 const getAllDsReadings = (id, dispatch) => {
   dispatch(fetchNodeReadings({
@@ -52,14 +53,16 @@ const getReadingsFromRange = createSelector(
   }
 );
 
+// -----------------------------------------------------------------------
+// hide state
+
 export default function DatastreamArea({ id }) {
 
   const [tabIdx, setTabIdx] = useState(0);
-  const [dtRange, setDtRange] = useState([0, 0]);
   const [committedDtRange, setCommittedDtRange] = useState([0, 0]);
 
-  const quantTime = useMemo(() =>
-    getResamplingTime(committedDtRange[0], committedDtRange[1], 1000, 100),
+  const commitedQuantTime = useMemo(() =>
+    getResamplingTime(committedDtRange[0], committedDtRange[1], MIN_RESAMPLING_TIME, MAX_NUM_POINTS_ON_CHART),
     [committedDtRange]
   );
 
@@ -72,9 +75,7 @@ export default function DatastreamArea({ id }) {
   const { minTs, maxTs } = useSelector(getMinMaxTs);
 
   useEffect(() => {
-    const init = [minTs, maxTs];
-    setDtRange(init);
-    setCommittedDtRange(init);
+    setCommittedDtRange([minTs, maxTs]);
   }, [minTs, maxTs]);
 
   const readingInfos = useSelector((state) => getReadingsFromRange(state, committedDtRange));
@@ -92,15 +93,14 @@ export default function DatastreamArea({ id }) {
         <InstancePropsPage id={id} />
       </TabPanel>
       <TabPanel value={tabIdx} index={1}>
-        <DsChartTab id={id} quantTime={quantTime} readingInfos={readingInfos} setDtRange={(dtRange) => { setDtRange(dtRange); setCommittedDtRange(dtRange); }} />
+        <DsChartTab id={id} quantTime={commitedQuantTime} readingInfos={readingInfos} setDtRange={(dtRange) => { setCommittedDtRange(dtRange); }} />
       </TabPanel>
       <TabPanel value={tabIdx} index={2}>
         <Typography variant='h3' sx={{ textAlign: "center" }}>Alarm log</Typography>
         <Container>Later</Container>
       </TabPanel>
       <Box sx={{ display: "flex", justifyContent: "space-evenly" }}>
-        <DatetimeRangeSlider dtRange={dtRange} handleChange={setDtRange} handleChangeCommitted={setCommittedDtRange} minTs={minTs} maxTs={maxTs} quantTime={quantTime} addStyles={{ width: '70%', p: 1 }} />
-        <Typography variant="h6" sx={{ display: "flex", justifyContent: "center", p: 1 }}>Quant time<br />{quantTime / 1000} s</Typography>
+        <DatetimeRangeSlider commitedDtRange={committedDtRange} handleChangeCommitted={setCommittedDtRange} minTs={minTs} maxTs={maxTs} addStyles={{ width: '70%', p: 1 }} />
       </Box>
     </Box>
   );

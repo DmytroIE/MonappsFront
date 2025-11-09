@@ -6,7 +6,7 @@ const findMinMaxTsAmongManyReadingInfos = (readingInfos: Array<IndReadingInfo>) 
         return { minTs: 0, maxTs: 0 };
     }
     let minTs = Infinity;
-    let maxTs = -Infinity;
+    let maxTs = 0;
     for (const readingInfo of readingInfos) {
         if (readingInfo.firstReadingTs !== null) {
             minTs = Math.min(minTs, readingInfo.firstReadingTs);
@@ -18,4 +18,17 @@ const findMinMaxTsAmongManyReadingInfos = (readingInfos: Array<IndReadingInfo>) 
     return { minTs, maxTs };
 }
 
-export { findMinMaxTsAmongManyReadingInfos };
+const getMinMaxTsAmongManyReadingInfos = (infos: IndReadingInfo[]) => {
+    let minTs = Infinity;
+    let maxTs = 0;
+    for (const info of infos) {
+        const timestamps = Object.keys(info.readings).map(x => +x);
+        const minTsInReadings = Math.min(...timestamps);
+        minTs = Math.min(minTs, minTsInReadings);
+        const maxTsInReadings = Math.max(...timestamps);
+        maxTs = Math.max(maxTs, maxTsInReadings);
+    }
+    return { minTs, maxTs };
+}
+
+export { findMinMaxTsAmongManyReadingInfos, getMinMaxTsAmongManyReadingInfos };
