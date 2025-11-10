@@ -72,9 +72,10 @@ function* colorCycler() {
 }
 
 
-const AppChartTab =({ id, timeResample, dfInfos, readingInfos }) => {
+const AppChartTab = ({ id, timeResample, dfInfos, readingInfos }) => {
 
     const readingsLoadingState = useSelector((state) => state.tree.selNodeReadingsLoadingState);
+    const appData = useSelector((state) => state.tree.nodes[id]);
 
     if (readingsLoadingState === 'pending') {
         return <CircularProgress />;
@@ -118,6 +119,21 @@ const AppChartTab =({ id, timeResample, dfInfos, readingInfos }) => {
             deltaTime = 250000; // just to get some space around the point, it will be multiplied by 0.01 later
         }
 
+        const appCursorAnnotation = {
+            type: 'point',
+            backgroundColor: 'lime',
+            borderColor: 'black',
+            borderWidth: 1,
+            pointStyle: 'triangle',
+            radius: 10,
+            xValue: appData.cursorTs,
+            xScaleID: 'x',
+            yAdjust: 5,
+            yValue: 0,
+            yScaleID: 'y'
+        };
+        annotations['Cursor'] = appCursorAnnotation;
+
         return (
             <Box sx={{ height: 400 }}>
                 <Line data={{ datasets }} options={{
@@ -138,6 +154,10 @@ const AppChartTab =({ id, timeResample, dfInfos, readingInfos }) => {
                             text: 'Readings',
                         },
                         annotation: {
+                            clip: false,
+                            common: {
+                                drawTime: 'afterDraw'
+                            },
                             annotations,
                         }
                     },

@@ -42,51 +42,8 @@ export const selNodeMiddleware = store => next => action => {
                 store.dispatch(deleteNode({ id: action.payload.id }));
                 return;
             }
-
-        }
-
-        // in case of 'datastream' or 'datafeed' (items that have the 'lastReadingTs' field)
-        // check if there are new readings and fetch if so
-        if (
-            store.getState().tree.selNodeId === action.payload.id &&
-            action.payload.lastReadingTs !== undefined &&
-            store.getState().tree.selNodeReadings[action.payload.id] !== undefined
-        ) {
-            //find the item in the list of tree items
-            const node = store.getState().tree.nodes[action.payload.id];
-            if (node.lastReadingTs !== undefined && node.lastReadingTs !== action.payload.lastReadingTs) {
-                // item.lastReadingTs can be null or a number > 0
-                console.log("selNodeMiddleware - lets bring new readings !!!!!!");
-                store.dispatch(fetchNodeReadings(
-                    {
-                        ids: [action.payload.id]
-                    }));
-            }
         }
     }
+    // otherwise, the payload will update the sel node info in the state
     next(action);
-};
-
-
-export const getNodeDataMiddleware = store => next => action => {
-    next(action);
-    if (action.type === "tree/selectNode") {
-        const selNodeId = store.getState().tree.selNodeId;
-        const type = selNodeId.split(' ')[0];
-        if (type === 'datafeed') {
-            store.dispatch(fetchNodeReadings({ items: [{id: selNodeId, readingType: 'dfReadings', qty: 0}]}));
-        }
-        else if (type === 'datastream') {
-            store.dispatch(fetchNodeReadings({
-                items:[
-                    { id: selNodeId, readingType: 'dsReadings', qty: 0},
-                    { id: selNodeId, readingType: 'unusDsReadings', qty: 0},
-                    { id: selNodeId, readingType: 'invDsReadings', qty: 0},
-                    { id: selNodeId, readingType: 'norcDsReadings', qty: 0},
-                    { id: selNodeId, readingType: 'ndMarkers', qty: 0},
-                    { id: selNodeId, readingType: 'unusNdMarkers', qty: 0}
-                ]
-            }));
-        }
-    }
 };

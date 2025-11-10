@@ -85,9 +85,10 @@ const createDfChartData = (
     const initialStartTs = sortedInitialValues[0].t;
     const initialEndTs = sortedInitialValues[sortedInitialValues.length - 1].t;
 
-    chartData.annotations[initialStartTs] = ({
+    const dashLength = Math.round(Math.random() * 4) + 3;
+    chartData.annotations[name + ' Start'] = ({
         type: 'line',
-        borderDash: [5, 5],
+        borderDash: [dashLength, dashLength],
         borderColor: color,
         borderWidth: 2,
         scaleID: 'x',
@@ -112,9 +113,9 @@ const createDfChartData = (
             return true;
         }
     });
-    chartData.annotations[initialEndTs] = ({
+    chartData.annotations[name + ' End'] = ({
         type: 'line',
-        borderDash: [5, 5],
+        borderDash: [dashLength, dashLength],
         borderColor: color,
         borderWidth: 2,
         scaleID: 'x',
@@ -252,7 +253,7 @@ const prepareNdmAnnotations = (
 }
 
 
-const createDsChartData =(
+const createDsChartData = (
     readingInfos: IndReadingInfo[],
     dsInfo: { name: string },
     maxClusterTimeSpan: number,
@@ -299,7 +300,7 @@ const createDsChartData =(
     return chartData;
 }
 
-const getTimeUnitAndDivider = (deltaTime: number) =>{
+const getTimeUnitAndDivider = (deltaTime: number) => {
     let timeUnit;
     let timeDivider;
 
