@@ -24,25 +24,23 @@ export const selNodeMiddleware = store => next => action => {
         }
 
         const messageType = action.payload.messageType;
-        delete action.payload.messageType;
-
-        // if this is message that contains only the object id (messageType has already been deleted)
-        if (Object.keys(action.payload).length === 1) {
-            if (messageType === "u") {
-                store.dispatch(fetchNodeData({ id: action.payload.id }));
-                return;
-            }
-            else if (messageType === "c") {
-                store.dispatch(addNode({ id: action.payload.id }));
-                store.dispatch(fetchNodeData({ id: action.payload.id }));
-                return;
-            }
-            else if (messageType === "d") {
-                store.dispatch(selectNode(null));
-                store.dispatch(deleteNode({ id: action.payload.id }));
-                return;
-            }
+        if (messageType === "u" && Object.keys(action.payload).length === 2) {
+            // just in case if in the future there will be such a message
+            // with only two fields {id: <ID>, messageType: "u"}
+            store.dispatch(fetchNodeData({ id: action.payload.id }));
+            return;
         }
+        if (messageType === "c") {
+            store.dispatch(addNode({ id: action.payload.id }));
+            store.dispatch(fetchNodeData({ id: action.payload.id }));
+            return;
+        }
+        if (messageType === "d") {
+            store.dispatch(selectNode(null));
+            store.dispatch(deleteNode({ id: action.payload.id }));
+            return;
+        }
+
     }
     // otherwise, the payload will update the sel node info in the state
     next(action);

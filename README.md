@@ -22,3 +22,4 @@ Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 Builds the app for production to the `build` folder.\
 It correctly bundles React in production mode and optimizes the build for the best performance.
 
+> Before start, change the IP address in the file `src/services/api.ts` (variable `BASE_URL`). Also, change the `mqtt` broker address in the file `src/services/mqtt.js` (variable `URL`).
