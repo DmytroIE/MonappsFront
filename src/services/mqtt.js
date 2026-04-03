@@ -55,6 +55,8 @@ const createMqttClient = (dispatch) => {
             const msg_obj = JSON.parse(message.toString());
             console.log('A message received from MQTT');
             console.log(msg_obj);
+            const messageType = topic.split('/').at(-1);
+            msg_obj.messageType = messageType;
             dispatch(updateNode(msg_obj));
         } catch (error) {
             console.log(error);

@@ -12,6 +12,9 @@ export const mqttMiddleware = store => next => action => {
 export const selNodeMiddleware = store => next => action => {
     // clear the readings in the store entirely before selecting a new item
     if (action.type === "tree/selectNode") {
+        if (action.payload === store.getState().tree.selNodeId){
+            return;
+        }
         if (action.payload === null || store.getState().tree.selNodeId !== action.payload.id) {
             store.dispatch(clearSelNodeReadings());
         }

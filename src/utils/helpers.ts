@@ -15,6 +15,10 @@ const getMinMaxTsFromInfoBatch = (infos: IndReadingInfo[]): { minTs: number, max
             maxTs = Math.max(maxTs, readingInfo.lastReadingTs);
         }
     }
+    if (minTs === Infinity && maxTs === 0) {
+        minTs = 0;
+        maxTs = 0;
+    }
     return { minTs, maxTs };
 }
 
