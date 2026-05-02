@@ -36,7 +36,7 @@ ChartJS.register(
 );
 
 
-const DfChartTab = ({ id, timeResample, readingInfo }) => {
+const DfChartTab = ({ id, chartTimeResample, dfInfo, readingInfo }) => {
 
     const nodeData = useSelector((state) => state.tree.nodes[id]);
     const readingsLoadingState = useSelector((state) => state.tree.selNodeReadingsLoadingState);
@@ -46,7 +46,7 @@ const DfChartTab = ({ id, timeResample, readingInfo }) => {
     } else {
         const colorObj = { r: 255, g: 99, b: 132 };
 
-        const chartData = createDfChartData(readingInfo, timeResample, nodeData, colorObj);
+        const chartData = createDfChartData(readingInfo, chartTimeResample, nodeData, colorObj);
 
         if (chartData.datasets.length === 0) {
             return (
@@ -104,8 +104,8 @@ const DfChartTab = ({ id, timeResample, readingInfo }) => {
                             time: {
                                 unit: timeUnit,
                             },
-                            min: startTs - timeResample,    // Add explicit bounds
-                            max: endTs + timeResample,
+                            min: startTs - chartTimeResample,    // Add explicit bounds
+                            max: endTs + chartTimeResample,
                             ticks: {
                                 callback: (val) => {
                                     const date = new Date(val);

@@ -38,17 +38,26 @@ const getResamplingTime = (startTs: number, endTs: number, initialTimeResample: 
     return Math.max(initialTimeResample, updatedResTime);
 }
 
-const resampleDfReadings = (sortedValues: Reading[], timeResample: number, aggType: number) => {
+const resampleDfReadings = (sortedReadings: Reading[], chartTimeResample: number, timeResample: number, aggType: number, datastreamPk: number | null) => {
     const resampleMap: { [key: number | string]: Array<Reading> } = {};
-    for (const val of sortedValues) {
-        const ts = val.t;
-        const ceiledTs = ceilTimestamp(ts, timeResample);
+    const newReadingMap: ReadingMap = {};
+    if (chartTimeResample === timeResample) {
+        for (let reading of sortedReadings) {
+            if (datastreamPk !== null && reading.n === 0) {
+                reading = { ...reading, r: true };
+            }
+            newReadingMap[reading.t] = reading;
+        }
+        return newReadingMap;
+    }
+    for (const reading of sortedReadings) {
+        const ts = reading.t;
+        const ceiledTs = ceilTimestamp(ts, chartTimeResample);
         if (resampleMap[ceiledTs] === undefined) {
             resampleMap[ceiledTs] = [];
         }
-        resampleMap[ceiledTs].push(val);
+        resampleMap[ceiledTs].push(reading);
     }
-    const newReadingMap: ReadingMap = {};
     for (const ceiledTs of Object.keys(resampleMap)) {
         const v = aggType === 0 ? findAverage(resampleMap[ceiledTs]) : aggType === 1 ? findSum(resampleMap[ceiledTs]) : findLast(resampleMap[ceiledTs]);
         if (v === null) {
@@ -61,7 +70,7 @@ const resampleDfReadings = (sortedValues: Reading[], timeResample: number, aggTy
 
 const groupDsReadings = (readingMap: ReadingMap, maxClusterTimeSpan: number, timeGrouping: number) => {
     if (Object.keys(readingMap).length === 0) {
-        return readingMap;
+        return { singleReadingMap: readingMap, groupedReadingMap: {} };
     }
 
     if (timeGrouping === 0) {

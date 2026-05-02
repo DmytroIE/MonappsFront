@@ -2,10 +2,11 @@ type nodeWithReadingsId = `datafeed ${number}` | `datastream ${number}`;
 type dsReadingtypes = 'dsReadings' | 'unusDsReadings' | 'invDsReadings' | 'norcDsReadings' | 'ndMarkers' | 'unusNdMarkers';
 type dfReadingtypes = 'dfReadings';
 type ReadingsRequestItem = { id: nodeWithReadingsId, readingType: dsReadingtypes | dfReadingtypes, gt?: number, gte?: number, lte?: number, qty?: number, resamplingTime?: number };
-type Reading = { t: number, v: number, r?: boolean, t2?: number, v2?: number };
+type Reading = { t: number, v: number, r?: boolean, t2?: number, v2?: number, n?: number };
 type ReadingsApiResponse = { id: nodeWithReadingsId, readingType: dsReadingtypes | dfReadingtypes, firstReadingTs: number | null, lastReadingTs: number | null, batch: Reading[] }
-type ReadingMap = { [ts: number | string]: Reading }
-type IndReadingInfo = { id: nodeWithReadingsId, readingType: dsReadingtypes | dfReadingtypes, firstReadingTs: number | null, lastReadingTs: number | null, lastFetchError: string | null, readings: ReadingMap }
+type ReadingMap = { [ts: number | string]: Reading };
+type IndReadingInfo = { id: nodeWithReadingsId, readingType: dsReadingtypes | dfReadingtypes, firstReadingTs: number | null, lastReadingTs: number | null, lastFetchError: string | null, readings: ReadingMap };
+type DfInfo = { name: string, timeResample: number, datastreamPk: number | null, aggType: number, varType: number, isTotalizer: boolean };
 
 const resamplingTimes = [
     1000,
@@ -50,6 +51,7 @@ export type {
     nodeWithReadingsId,
     dsReadingtypes,
     dfReadingtypes,
+    DfInfo,
     ReadingsRequestItem,
     Reading,
     ReadingsApiResponse,

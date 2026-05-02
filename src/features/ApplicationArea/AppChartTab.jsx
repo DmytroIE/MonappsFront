@@ -72,7 +72,7 @@ function* colorCycler() {
 }
 
 
-const AppChartTab = ({ id, timeResample, dfInfos, readingInfos }) => {
+const AppChartTab = ({ id, chartTimeResample, dfInfos, readingInfos }) => {
 
     const readingsLoadingState = useSelector((state) => state.tree.selNodeReadingsLoadingState);
     const appData = useSelector((state) => state.tree.nodes[id]);
@@ -90,7 +90,7 @@ const AppChartTab = ({ id, timeResample, dfInfos, readingInfos }) => {
 
             const readingInfo = readingInfos.find((rInfo) => rInfo.id === dfInfo.id);
 
-            const dfChartData = createDfChartData(readingInfo, timeResample, dfInfo, colorObj);
+            const dfChartData = createDfChartData(readingInfo, chartTimeResample, dfInfo, colorObj);
 
             if (dfInfo.name === 'Status' || dfInfo.name === 'Current state') {
                 for (const dataset of dfChartData.datasets) {
@@ -167,8 +167,8 @@ const AppChartTab = ({ id, timeResample, dfInfos, readingInfos }) => {
                             time: {
                                 unit: timeUnit,
                             },
-                            min: startTs - timeResample,    // Add explicit bounds
-                            max: endTs + timeResample,
+                            min: startTs - chartTimeResample,    // Add explicit bounds
+                            max: endTs + chartTimeResample,
                             ticks: {
                                 callback: (val) => {
                                     const date = new Date(val);

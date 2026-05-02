@@ -25,6 +25,14 @@ const getAllDfReadings = (ids, dispatch) => {
   dispatch(fetchNodeReadings({ items }));
 }
 
+const getMinTimeResample = (appInfo, dfInfos) => {
+    if (dfInfos.length === 0) {
+        return appInfo.timeResample;
+    }
+    const timeResamples = dfInfos.map(dfInfo => dfInfo.timeResample);
+    return Math.min(...timeResamples);
+}
+
 const getDfInfos = createSelector(
   [(state) => state.tree.nodes, (state, itemId) => itemId],
   (nodes, id) => Object.values(nodes).filter((item) => item.parentId === id)
@@ -45,17 +53,17 @@ const ApplicationArea = ({ id }) => {
   const [committedDtRange, setCommittedDtRange] = useState([0, 0]);
 
   const nodeData = useSelector((state) => state.tree.nodes[id]);
+  const dfInfos = useSelector(state => getDfInfos(state, id));
 
   const commitedTimeResample = useMemo(() =>
-    getResamplingTime(committedDtRange[0], committedDtRange[1], nodeData.timeResample, MAX_NUM_POINTS_ON_CHART),
-    [committedDtRange]
+    getResamplingTime(committedDtRange[0], committedDtRange[1], getMinTimeResample(nodeData, dfInfos), MAX_NUM_POINTS_ON_CHART),
+    [committedDtRange, dfInfos]
   );
 
   const handleTabChange = (event, newTabIdx) => {
     setTabIdx(newTabIdx);
   };
 
-  const dfInfos = useSelector(state => getDfInfos(state, id));
   const datafeedIds = dfInfos.map((item) => item.id);
   const dispatch = useDispatch();
   useEffect(() => getAllDfReadings(datafeedIds, dispatch), []);
@@ -82,7 +90,7 @@ const ApplicationArea = ({ id }) => {
       <TabPanel value={tabIdx} index={1}>
         <AppChartTab
           id={id}
-          timeResample={commitedTimeResample}
+          chartTimeResample={commitedTimeResample}
           dfInfos={dfInfos}
           readingInfos={readingInfos} />
       </TabPanel>

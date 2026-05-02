@@ -1,4 +1,4 @@
-import { VarTypes, AggTypes, ReadingMap, Reading, IndReadingInfo, ChartData, Color } from "../types";
+import { VarTypes, AggTypes, ReadingMap, DfInfo, Reading, IndReadingInfo, ChartData, Color } from "../types";
 import { groupDsReadings, resampleDfReadings } from "./resampling";
 import { dtFormatter } from "../utils/timeUtils";
 import { getStartEndTsFromInfoBatch } from "./helpers";
@@ -6,8 +6,8 @@ import { getStartEndTsFromInfoBatch } from "./helpers";
 
 const createDfChartData = (
     dfReadingInfo: IndReadingInfo,
-    timeResample: number,
-    dfInfo: { name: string, aggType: number, varType: number, isTotalizer: boolean },
+    chartTimeResample: number,
+    dfInfo: DfInfo,
     colorObj: Color
 ) => {
     const chartData: ChartData = {
@@ -19,7 +19,7 @@ const createDfChartData = (
 
     if (Object.keys(dfReadingInfo.readings).length === 0) return chartData;
 
-    const { name, aggType, varType, isTotalizer } = dfInfo;
+    const { name, timeResample, datastreamPk, aggType, varType, isTotalizer } = dfInfo;
     const color = `rgb(${colorObj.r}, ${colorObj.g}, ${colorObj.b})`;
     const lightColor = `rgba(${colorObj.r}, ${colorObj.g}, ${colorObj.b}, 0.2)`;
     const bgColor = `rgba(${colorObj.r}, ${colorObj.g}, ${colorObj.b}, 0.5)`;
@@ -31,7 +31,7 @@ const createDfChartData = (
         updAggType = AggTypes.LAST;
     }
     const sortedInitialValues = Object.values(dfReadingInfo.readings).sort((a, b) => a.t - b.t);
-    const resampledDfReadingMap = resampleDfReadings(sortedInitialValues, timeResample, updAggType);
+    const resampledDfReadingMap = resampleDfReadings(sortedInitialValues, chartTimeResample, timeResample, updAggType, datastreamPk);
 
     const timestamps = Object.keys(resampledDfReadingMap).map(x => +x); // find limits after resampling
     const startTs = Math.min(...timestamps);
@@ -47,13 +47,15 @@ const createDfChartData = (
     const augmentedDfReadingMap: { [ts: number]: Reading | { t: number, v: number | null, r?: boolean } } = {};
     for (const reading of Object.values(resampledDfReadingMap)) {
         augmentedDfReadingMap[reading.t] = reading;
-        const nextTsInGrid = reading.t + timeResample;
+        const nextTsInGrid = reading.t + chartTimeResample;
         if (dfReadingInfo.readings[nextTsInGrid] === undefined) {
             augmentedDfReadingMap[nextTsInGrid] = { t: nextTsInGrid, v: null };
         }
     }
 
     const data = Object.values(augmentedDfReadingMap).map((rd) => rd.v !== null ? [rd.t, rd.v] : [rd.t, null]);
+
+    const pointRadius = chartTimeResample === timeResample ? 3 : 6;
 
     let dfrDataset: { [key: string]: any } =
     {
@@ -65,7 +67,7 @@ const createDfChartData = (
         pointBorderColor: color,
         spanGaps: false,
         stepped,
-        pointRadius: 4,
+        pointRadius,
         pointBorderWidth: 1,
     }
 

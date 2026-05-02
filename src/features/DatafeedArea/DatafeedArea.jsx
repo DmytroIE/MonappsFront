@@ -77,7 +77,8 @@ const DatafeedArea = ({ id }) => {
       <TabPanel value={tabIdx} index={1}>
         <DfChartTab
           id={id}
-          timeResample={commitedTimeResample}
+          chartTimeResample={commitedTimeResample}
+          dfInfo={nodeData}
           readingInfo={readingInfos[0]} />
       </TabPanel>
       <Box sx={{ display: "flex", justifyContent: "space-evenly" }}>
